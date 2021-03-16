@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Calculator
+Name[zh_CN]=计算器
+Exec=cutefish-calculator
+Icon=calculator
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Calculator;
