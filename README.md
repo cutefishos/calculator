@@ -2,11 +2,7 @@
 
 CutefishOS Calculator
 
-![](screenshots/screenshot.png)
-
 ## Dependencies
-
-On ArchLinux:
 
 ```shell
 sudo apt-get install cmake gcc qtbase5-dev qtdeclarative5-dev qml-module-qtquick2 qml-module-qtquick-controls2
