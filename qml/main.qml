@@ -33,7 +33,7 @@ Meui.Window {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 0
+        spacing: Meui.Units.smallSpacing
 
         Zone {
             id: zone
@@ -41,13 +41,10 @@ Meui.Window {
             Layout.preferredHeight: parent.height * 0.35
         }
 
-        ButtonsView {
-            id: buttons
+        StandardPad {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            labels: ['AC/C', '%', '←', '÷', '7', '8', '9', '×', '4', '5', '6', '−', '1', '2', '3', '+', '0', '.', '()', '=']
-            targets: ['AC/C', '%', 'BACK', '/', '7', '8', '9', '*', '4', '5', '6', '-', '1', '2', '3', '+', '0', '.', '()', '=']
-            onButtonClicked: zone.appendToTextField(strToAppend)
+            onPressed: zone.appendToTextField(text)
         }
     }
 

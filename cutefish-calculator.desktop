@@ -2,7 +2,7 @@
 Name=Calculator
 Name[zh_CN]=计算器
 Exec=cutefish-calculator
-Icon=calculator
+Icon=cutefish-calculator
 Terminal=false
 Type=Application
 StartupNotify=true

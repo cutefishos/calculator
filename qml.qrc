@@ -1,8 +1,8 @@
 <RCC>
     <qresource prefix="/">
         <file>qml/main.qml</file>
-        <file>qml/ButtonsView.qml</file>
         <file>qml/Zone.qml</file>
-        <file>qml/CTextField.qml</file>
+        <file>qml/StandardButton.qml</file>
+        <file>qml/StandardPad.qml</file>
     </qresource>
 </RCC>

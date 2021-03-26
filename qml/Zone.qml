@@ -51,12 +51,22 @@ Item {
             }
         }
 
-        CTextField {
+        TextField {
             id: textField
             height: 50
             Layout.fillWidth: true
             Keys.onReturnPressed: appendToTextField('=')
             Keys.onEnterPressed: appendToTextField('=')
+
+            selectByMouse: true
+            horizontalAlignment: TextInput.AlignRight
+            focus: Qt.StrongFocus
+            font.pixelSize: 24
+
+            background: Rectangle {
+                border.width: 0
+                color: "transparent"
+            }
 
             leftPadding: Meui.Units.largeSpacing
             rightPadding: Meui.Units.largeSpacing
@@ -77,7 +87,7 @@ Item {
                     historyModel.append({"text": expressionText})
                 }
             }
-        } else if (text === 'AC/C') {
+        } else if (text === 'C') {
             if (textField.text != "")
                 textField.clear()
             else 
