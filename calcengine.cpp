@@ -28,7 +28,13 @@ CalcEngine::CalcEngine(QObject *parent)
 
 QString CalcEngine::eval(const QString &expr)
 {
-    m_evaluator->setExpression(expr);
+    QString text = expr;
+    text = text.replace("＋", "+");
+    text = text.replace("－", "-");
+    text = text.replace("×", "*");
+    text = text.replace("÷", "/");
+
+    m_evaluator->setExpression(text);
     m_evaluator->eval();
 
     if (m_evaluator->error().isEmpty()) {
