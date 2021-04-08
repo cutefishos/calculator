@@ -92,7 +92,7 @@ Item {
                 textField.clear()
             else 
                 historyModel.clear()
-        } else if (text === 'BACK') {
+        } else if (text === 'BACKSPACE') {
             // backspace
             textField.remove(textField.cursorPosition, textField.cursorPosition - 1)
         } else {

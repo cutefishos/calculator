@@ -13,15 +13,8 @@ Meui.Window {
     title: qsTr("Calculator")
     id: rootWindow
 
-    backgroundColor: Meui.Theme.secondBackgroundColor
-    backgroundOpacity: Meui.Theme.darkMode ? 0.9 : 0.7
-
-    Meui.WindowBlur {
-        view: rootWindow
-        enabled: true
-        geometry: Qt.rect(rootWindow.x, rootWindow.y, rootWindow.width, rootWindow.height)
-        windowRadius: rootWindow.windowRadius
-    }
+    backgroundColor: Meui.Theme.darkMode ? Qt.rgba(46 / 255, 46 / 255, 46 / 255, 1.0)
+                                         : Qt.rgba(240 / 255, 238 / 255, 241 / 255, 1.0)
 
     CalcEngine {
         id: calcEngine

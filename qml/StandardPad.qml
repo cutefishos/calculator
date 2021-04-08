@@ -11,13 +11,16 @@ Item {
     GridLayout {
         id: _mainLayout
         anchors.fill: parent
-        columnSpacing: 1
-        rowSpacing: 1
+        columnSpacing: 2
+        rowSpacing: 2
         columns: 4
 
         StandardButton { text: "C"; onClicked: control.pressed(text) }
+        StandardButton {
+            icon: Meui.Theme.darkMode ? "qrc:/images/dark/backspace.svg" : "qrc:/images/light/backspace.svg"
+            onClicked: control.pressed("BACKSPACE")
+        }
         StandardButton { text: "%"; onClicked: control.pressed(text) }
-        StandardButton { text: "←"; onClicked: control.pressed(text) }
         StandardButton { text: "÷"; textColor: Meui.Theme.highlightColor; onClicked: control.pressed(text) }
         StandardButton { text: "7"; onClicked: control.pressed(text) }
         StandardButton { text: "8"; onClicked: control.pressed(text) }
