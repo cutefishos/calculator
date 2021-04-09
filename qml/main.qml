@@ -2,9 +2,9 @@ import QtQuick 2.12
 import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.3
 import Cutefish.Calculator 1.0
-import MeuiKit 1.0 as Meui
+import FishUI 1.0 as FishUI
 
-Meui.Window {
+FishUI.Window {
     visible: true
     width: 350
     height: 550
@@ -13,7 +13,7 @@ Meui.Window {
     title: qsTr("Calculator")
     id: rootWindow
 
-    backgroundColor: Meui.Theme.darkMode ? Qt.rgba(46 / 255, 46 / 255, 46 / 255, 1.0)
+    backgroundColor: FishUI.Theme.darkMode ? Qt.rgba(46 / 255, 46 / 255, 46 / 255, 1.0)
                                          : Qt.rgba(240 / 255, 238 / 255, 241 / 255, 1.0)
 
     CalcEngine {
@@ -26,7 +26,7 @@ Meui.Window {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: Meui.Units.smallSpacing
+        spacing: FishUI.Units.smallSpacing
 
         Zone {
             id: zone

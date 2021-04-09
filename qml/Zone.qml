@@ -3,7 +3,7 @@ import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.5
 import QtQuick.Controls.Styles 1.4
 
-import MeuiKit 1.0 as Meui
+import FishUI 1.0 as FishUI
 import Cutefish.Calculator 1.0
 
 Item {
@@ -30,7 +30,7 @@ Item {
             }
 
             delegate: Item {
-                height: label.implicitHeight + Meui.Units.largeSpacing * 2
+                height: label.implicitHeight + FishUI.Units.largeSpacing * 2
                 width: parent ? parent.width : undefined
 
                 Label {
@@ -39,10 +39,10 @@ Item {
                     horizontalAlignment: Qt.AlignRight
                     text: historyModel.get(index).text
                     elide: Text.ElideMiddle
-                    color: Meui.Theme.disabledTextColor
+                    color: FishUI.Theme.disabledTextColor
 
-                    leftPadding: Meui.Units.largeSpacing
-                    rightPadding: Meui.Units.largeSpacing
+                    leftPadding: FishUI.Units.largeSpacing
+                    rightPadding: FishUI.Units.largeSpacing
 
                     MouseArea {
                         hoverEnabled: true
@@ -68,8 +68,8 @@ Item {
                 color: "transparent"
             }
 
-            leftPadding: Meui.Units.largeSpacing
-            rightPadding: Meui.Units.largeSpacing
+            leftPadding: FishUI.Units.largeSpacing
+            rightPadding: FishUI.Units.largeSpacing
         }
     }
 
@@ -78,7 +78,7 @@ Item {
             var res = calculate(textField.text)
             if (res !== '') {
                 var expressionText = textField.text
-                textField.text = res;
+                textField.text = res
 
                 // If the expression and the result area equal,
                 // it will not be added to the ListView
