@@ -53,7 +53,7 @@ Item {
 
         TextField {
             id: textField
-            height: 50
+            Layout.preferredHeight: 50
             Layout.fillWidth: true
             Keys.onReturnPressed: appendToTextField('=')
             Keys.onEnterPressed: appendToTextField('=')

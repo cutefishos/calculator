@@ -11,8 +11,8 @@ Item {
     GridLayout {
         id: _mainLayout
         anchors.fill: parent
-        columnSpacing: 2
-        rowSpacing: 2
+        columnSpacing: 1
+        rowSpacing: 1
         columns: 4
 
         StandardButton { text: "C"; onClicked: control.pressed(text) }

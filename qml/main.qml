@@ -5,16 +5,23 @@ import Cutefish.Calculator 1.0
 import FishUI 1.0 as FishUI
 
 FishUI.Window {
-    visible: true
+    id: rootWindow
     width: 350
     height: 550
     minimumWidth: 350
     minimumHeight: 550
     title: qsTr("Calculator")
-    id: rootWindow
 
-    backgroundColor: FishUI.Theme.darkMode ? Qt.rgba(46 / 255, 46 / 255, 46 / 255, 1.0)
-                                         : Qt.rgba(240 / 255, 238 / 255, 241 / 255, 1.0)
+    background.color: FishUI.Theme.darkMode ? Qt.rgba(46 / 255, 46 / 255, 46 / 255, 1.0)
+                                            : Qt.rgba(240 / 255, 238 / 255, 241 / 255, 1.0)
+    background.opacity: rootWindow.compositing ? 0.9 : 1.0
+
+    FishUI.WindowBlur {
+        view: rootWindow
+        geometry: Qt.rect(rootWindow.x, rootWindow.y, rootWindow.width, rootWindow.height)
+        windowRadius: rootWindow.background.radius
+        enabled: true
+    }
 
     CalcEngine {
         id: calcEngine
@@ -37,6 +44,14 @@ FishUI.Window {
         StandardPad {
             Layout.fillWidth: true
             Layout.fillHeight: true
+
+            Rectangle {
+                z: -1
+                anchors.fill: parent
+                color: rootWindow.background.color
+                opacity: 0.4
+            }
+
             onPressed: zone.appendToTextField(text)
         }
     }
