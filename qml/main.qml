@@ -48,7 +48,7 @@ FishUI.Window {
             Rectangle {
                 z: -1
                 anchors.fill: parent
-                color: rootWindow.background.color
+                color: FishUI.Theme.secondBackgroundColor
                 opacity: 0.4
             }
 

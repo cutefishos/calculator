@@ -17,9 +17,9 @@ Item {
     Layout.fillHeight: true
 
     property color backgroundColor: FishUI.Theme.backgroundColor
-    property color hoveredColor: FishUI.Theme.darkMode ? Qt.lighter(FishUI.Theme.backgroundColor, 1.1)
+    property color hoveredColor: FishUI.Theme.darkMode ? Qt.lighter(FishUI.Theme.backgroundColor, 1.7)
                                                        : Qt.darker(FishUI.Theme.backgroundColor, 1.1)
-    property color pressedColor: FishUI.Theme.darkMode ? Qt.darker(FishUI.Theme.backgroundColor, 1.05)
+    property color pressedColor: FishUI.Theme.darkMode ? Qt.lighter(FishUI.Theme.backgroundColor, 1.4)
                                                        : Qt.darker(FishUI.Theme.backgroundColor, 1.3)
 
     property color flatBg: FishUI.Theme.highlightColor

@@ -37,7 +37,7 @@ Item {
                     id: label
                     anchors.fill: parent
                     horizontalAlignment: Qt.AlignRight
-                    text: historyModel.get(index).text
+                    text: historyModel.count > 0 ? historyModel.get(index).text : ""
                     elide: Text.ElideMiddle
                     color: FishUI.Theme.disabledTextColor
 
