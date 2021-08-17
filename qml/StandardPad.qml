@@ -29,11 +29,11 @@ Item {
         StandardButton { text: "4"; onClicked: control.pressed(text) }
         StandardButton { text: "5"; onClicked: control.pressed(text) }
         StandardButton { text: "6"; onClicked: control.pressed(text) }
-        StandardButton { text: "－"; textColor: FishUI.Theme.highlightColor; onClicked: control.pressed(text) }
+        StandardButton { text: "-"; textColor: FishUI.Theme.highlightColor; onClicked: control.pressed(text) }
         StandardButton { text: "1"; onClicked: control.pressed(text) }
         StandardButton { text: "2"; onClicked: control.pressed(text) }
         StandardButton { text: "3"; onClicked: control.pressed(text) }
-        StandardButton { text: "＋"; textColor: FishUI.Theme.highlightColor; onClicked: control.pressed(text) }
+        StandardButton { text: "+"; textColor: FishUI.Theme.highlightColor; onClicked: control.pressed(text) }
         StandardButton { text: "0"; onClicked: control.pressed(text) }
         StandardButton { text: "."; onClicked: control.pressed(text) }
         StandardButton { text: "()"; onClicked: control.pressed(text) }

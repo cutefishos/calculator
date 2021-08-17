@@ -54,6 +54,7 @@ Item {
         sourceSize: Qt.size(width, height)
         source: control.icon ? control.icon : ""
         visible: _icon.status === Image.Ready
+        smooth: false
     }
 
     Label {

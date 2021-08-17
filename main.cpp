@@ -22,13 +22,17 @@
 #include <QQmlContext>
 #include <QTranslator>
 #include <QLocale>
+#include <QIcon>
 #include <QFile>
 #include "calcengine.h"
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps, true);
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling, true);
+
     QGuiApplication app(argc, argv);
+    app.setWindowIcon(QIcon::fromTheme("cutefish-calculator"));
 
     qmlRegisterType<CalcEngine>("Cutefish.Calculator", 1, 0, "CalcEngine");
 
