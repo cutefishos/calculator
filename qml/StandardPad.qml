@@ -11,6 +11,7 @@ Item {
     GridLayout {
         id: _mainLayout
         anchors.fill: parent
+        anchors.margins: FishUI.Units.smallSpacing
         columnSpacing: 1
         rowSpacing: 1
         columns: 4
