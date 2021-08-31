@@ -52,12 +52,13 @@ Item {
         id: _icon
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        width: control.height * 0.4
+        width: control.height * 0.45
         height: width
         sourceSize: Qt.size(width, height)
         source: control.icon ? control.icon : ""
         visible: _icon.status === Image.Ready
         smooth: false
+        antialiasing: true
     }
 
     Label {

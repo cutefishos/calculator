@@ -14,7 +14,7 @@ FishUI.Window {
 
     background.color: FishUI.Theme.darkMode ? Qt.rgba(46 / 255, 46 / 255, 46 / 255, 1.0)
                                             : Qt.rgba(240 / 255, 238 / 255, 241 / 255, 1.0)
-    background.opacity: rootWindow.compositing ? 0.9 : 1.0
+    background.opacity: rootWindow.compositing ? 0.95 : 1.0
 
     FishUI.WindowBlur {
         view: rootWindow
@@ -49,7 +49,7 @@ FishUI.Window {
                 z: -1
                 anchors.fill: parent
                 color: FishUI.Theme.secondBackgroundColor
-                opacity: 0.4
+                opacity: 0.8
             }
 
             onPressed: zone.appendToTextField(text)
