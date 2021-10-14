@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Calculator
 Name[zh_CN]=计算器
-Exec=cutefish-calculator
+Exec=/usr/bin/cutefish-calculator
 Icon=cutefish-calculator
 Terminal=false
 Type=Application
