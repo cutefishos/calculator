@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.3
 import Cutefish.Calculator 1.0
+import Qt.labs.platform 1.0
 import FishUI 1.0 as FishUI
 
 FishUI.Window {
@@ -15,6 +16,27 @@ FishUI.Window {
     background.color: FishUI.Theme.darkMode ? Qt.rgba(46 / 255, 46 / 255, 46 / 255, 1.0)
                                             : Qt.rgba(240 / 255, 238 / 255, 241 / 255, 1.0)
     background.opacity: rootWindow.compositing ? 0.95 : 1.0
+
+    MenuBar {
+        id: menuBar
+
+        Menu {
+            id: helpMenu
+            title: qsTr("&Help")
+
+            MenuItem {
+                text: qsTr("About")
+                onTriggered: aboutDialog.show()
+            }
+        }
+    }
+
+    FishUI.AboutDialog {
+        id: aboutDialog
+        name: rootWindow.title
+        description: qsTr("A simple calculator")
+        iconSource: "image://icontheme/cutefish-calculator"
+    }
 
     FishUI.WindowBlur {
         view: rootWindow
@@ -49,7 +71,7 @@ FishUI.Window {
                 z: -1
                 anchors.fill: parent
                 color: FishUI.Theme.secondBackgroundColor
-                opacity: 0.8
+                opacity: 0.9
             }
 
             onPressed: zone.appendToTextField(text)
