@@ -22,7 +22,7 @@ FishUI.Window {
 
         Menu {
             id: helpMenu
-            title: qsTr("&Help")
+            title: qsTr("Help")
 
             MenuItem {
                 text: qsTr("About")
