@@ -33,6 +33,7 @@ FishUI.Window {
 
     FishUI.AboutDialog {
         id: aboutDialog
+        parent: rootWindow
         name: rootWindow.title
         description: qsTr("A simple calculator")
         iconSource: "image://icontheme/cutefish-calculator"
