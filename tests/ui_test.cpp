@@ -9,9 +9,11 @@
 #include "keypad.h"
 
 #include "ui/application.h"
+#include "ui/clipboard.h"
 #include "ui/icon.h"
 #include "ui/keys.h"
 #include "ui/label.h"
+#include "ui/menu.h"
 #include "ui/test_input.h"
 #include "ui/theme.h"
 
@@ -489,6 +491,59 @@ TEST(UiTest, EqualsKeyGreysWhenInactive)
     fixture.layout();
     EXPECT_EQ(plate("7"), color(CalculatorColor::Key));
     EXPECT_EQ(plate("="), color(CalculatorColor::AccentKey));
+}
+
+TEST(UiTest, MainMenu)
+{
+    Fixture fixture;
+    const Menu* menu = fixture.window.window().mainMenu();
+    ASSERT_NE(menu, nullptr);
+    EXPECT_EQ(menu->submenu(0)->role(), MenuRole::Application);
+    ASSERT_NE(menu->submenu(1), nullptr);
+    EXPECT_EQ(menu->submenu(2)->role(), MenuRole::Windows);
+}
+
+TEST(UiTest, CopyPasteAndClearHistory)
+{
+    Fixture fixture;
+    for (const char* key : {"1", "2", "×", "3"})
+        fixture.click(key);
+    fixture.window.copy();
+    std::string copied;
+    Clipboard::requestText([&](std::string text) { copied = std::move(text); });
+    EXPECT_EQ(copied, "12×3");
+
+    // Pasted text goes in as typed, skipping what the keypad does not have.
+    fixture.click(Keypad::Clear);
+    fixture.window.paste("1,234.5 + 10% =");
+    EXPECT_EQ(fixture.text(), "1234.5+10%");
+    fixture.window.paste("*2-1/4");
+    EXPECT_EQ(fixture.text(), "1234.5+10%×2−1÷4");
+    fixture.click(Keypad::Clear);
+    fixture.window.paste("..5x+−3");
+    EXPECT_EQ(fixture.text(), "0.5−3");
+
+    // The same from the keyboard.
+    Window& window = fixture.window.window();
+    TestInput::setKeyboardFocus(window, true);
+    KeyEvent copyKey = keyEvent(key::letter('c'), 46);
+    copyKey.modifiers = ControlModifier;
+    TestInput::pressKey(window, copyKey);
+    TestInput::releaseKey(window, copyKey);
+    Clipboard::requestText([&](std::string text) { copied = std::move(text); });
+    EXPECT_EQ(copied, "0.5−3");
+    fixture.click(Keypad::Clear);
+    KeyEvent pasteKey = keyEvent(key::letter('v'), 47);
+    pasteKey.modifiers = ControlModifier;
+    TestInput::pressKey(window, pasteKey);
+    TestInput::releaseKey(window, pasteKey);
+    EXPECT_EQ(fixture.text(), "0.5−3");
+
+    fixture.click("=");
+    EXPECT_EQ(fixture.window.history()->count(), 1u);
+    fixture.window.clearHistory();
+    EXPECT_EQ(fixture.window.history()->count(), 0u);
+    EXPECT_EQ(fixture.text(), "-2.5");
 }
 
 TEST(UiTest, LayoutIsStable)

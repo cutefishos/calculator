@@ -18,6 +18,8 @@ class HistoryView;
 class Keypad;
 
 namespace cutefish::ui {
+class AboutDialog;
+class Menu;
 struct KeyEvent;
 }
 
@@ -40,6 +42,13 @@ public:
 
     // What a keypad key does to the expression; Keypad::Backspace for the glyph key.
     void press(const std::string& key);
+    // The expression as shown, to the clipboard.
+    void copy();
+    // Text as if typed: the characters the keypad has, by the same rules; the
+    // rest, commas among them, as thousands separators usually are, skipped.
+    void paste(const std::string& text);
+    void pasteClipboard();
+    void clearHistory();
 
     const std::string& expression() const;
     ExpressionField* expressionField() const;
@@ -53,11 +62,17 @@ private:
     bool keyPress(const cutefish::ui::KeyEvent& event);
     bool keyRelease(const cutefish::ui::KeyEvent& event);
     void releaseKeys();
+    // After the expression or the history changed.
+    void update();
+    void buildMainMenu();
+    void openAbout();
     void retranslate();
 
     Calculator m_calculator;
     cutefish::ui::Window m_window;
     Root* m_root;
+    std::unique_ptr<cutefish::ui::Menu> m_mainMenu;
+    std::unique_ptr<cutefish::ui::AboutDialog> m_about;
     // The keypad keys held down from the keyboard, by the keyboard key.
     std::map<uint64_t, std::string> m_heldKeys;
     cutefish::base::Subscription m_languageChanged;

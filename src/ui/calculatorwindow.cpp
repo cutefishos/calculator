@@ -9,8 +9,11 @@
 #include "keypad.h"
 
 #include "base/i18n.h"
+#include "ui/about_dialog.h"
 #include "ui/application.h"
+#include "ui/clipboard.h"
 #include "ui/keys.h"
+#include "ui/menu.h"
 #include "ui/theme.h"
 #include "ui/window_header.h"
 
@@ -124,6 +127,11 @@ CalculatorWindow::CalculatorWindow()
     };
     m_root->setFocus();
 
+    // The main menu's key equivalents.
+    m_window.addShortcut(ControlModifier, key::letter('q'), [] { Application::instance()->quit(); });
+    m_window.addShortcut(ControlModifier, key::letter('c'), [this] { copy(); });
+    m_window.addShortcut(ControlModifier, key::letter('v'), [this] { pasteClipboard(); });
+
     retranslate();
     m_languageChanged = Application::instance()->languageChanged.connect([this] { retranslate(); });
 }
@@ -153,14 +161,70 @@ Keypad* CalculatorWindow::keypad() const
 void CalculatorWindow::press(const std::string& key)
 {
     m_calculator.press(key);
+    update();
+    // A click on the keypad keeps the keyboard here.
+    m_root->setFocus();
+}
+
+void CalculatorWindow::copy()
+{
+    if (!m_calculator.expression().empty())
+        Clipboard::setText(m_calculator.expression());
+}
+
+void CalculatorWindow::paste(const std::string& text)
+{
+    for (size_t i = 0; i < text.size();) {
+        size_t length = 1;
+        const auto lead = static_cast<unsigned char>(text[i]);
+        if (lead >= 0xf0)
+            length = 4;
+        else if (lead >= 0xe0)
+            length = 3;
+        else if (lead >= 0xc0)
+            length = 2;
+        const std::string character = text.substr(i, length);
+        i += length;
+        std::string key;
+        if (character.size() == 1 && character[0] >= '0' && character[0] <= '9')
+            key = character;
+        else if (character == ".")
+            key = ".";
+        else if (character == "+")
+            key = "+";
+        else if (character == "-" || character == "−")
+            key = "−";
+        else if (character == "*" || character == "x" || character == "X" || character == "×")
+            key = "×";
+        else if (character == "/" || character == "÷")
+            key = "÷";
+        else if (character == "%")
+            key = "%";
+        if (!key.empty())
+            m_calculator.press(key);
+    }
+    update();
+}
+
+void CalculatorWindow::pasteClipboard()
+{
+    Clipboard::requestText([this](std::string text) { paste(text); });
+}
+
+void CalculatorWindow::clearHistory()
+{
+    m_calculator.clearHistory();
+    update();
+}
+
+void CalculatorWindow::update()
+{
     const std::string& expression = m_calculator.expression();
     m_root->expression->setText(expression);
     if (m_root->history->count() != m_calculator.history().size())
         m_root->history->setEntries(m_calculator.history());
     // C clears the expression; AC, on an empty one, the history.
     m_root->keypad->button(Keypad::Clear)->setText(expression.empty() ? "AC" : "C");
-    // A click on the keypad keeps the keyboard here.
-    m_root->setFocus();
 }
 
 // The physical key when known, so the release finds the press under any layout or modifier.
@@ -214,7 +278,58 @@ void CalculatorWindow::releaseKeys()
     m_heldKeys.clear();
 }
 
+void CalculatorWindow::buildMainMenu()
+{
+    m_window.setMainMenu(nullptr);
+    m_mainMenu = std::make_unique<Menu>();
+
+    Menu* application = m_mainMenu->addSubmenu(tr("Calculator"));
+    application->setRole(MenuRole::Application);
+    application->addItem(tr("About Calculator"), [this] { openAbout(); });
+    application->addSeparator();
+    application->addItem(tr("Hide Calculator"), [this] { m_window.hideApplication(); });
+    application->addSeparator();
+    const size_t quit = application->addItem(tr("Quit Calculator"), [] { Application::instance()->quit(); });
+    application->setItemKeyEquivalent(quit, "q", ControlModifier);
+
+    Menu* edit = m_mainMenu->addSubmenu(tr("Edit"));
+    const size_t copyRow = edit->addItem(tr("Copy"), [this] { copy(); });
+    edit->setItemKeyEquivalent(copyRow, "c", ControlModifier);
+    const size_t pasteRow = edit->addItem(tr("Paste"), [this] { pasteClipboard(); });
+    edit->setItemKeyEquivalent(pasteRow, "v", ControlModifier);
+    edit->addSeparator();
+    const size_t clearRow = edit->addItem(tr("Clear History"), [this] { clearHistory(); });
+    edit->onAboutToShow = [this, edit, copyRow, pasteRow, clearRow] {
+        edit->setItemEnabled(copyRow, !m_calculator.expression().empty());
+        edit->setItemEnabled(pasteRow, Clipboard::hasText());
+        edit->setItemEnabled(clearRow, !m_calculator.history().empty());
+    };
+
+    Menu* windowMenu = m_mainMenu->addSubmenu(tr("Window"));
+    windowMenu->setRole(MenuRole::Windows);
+    windowMenu->addItem(tr("Minimize"), [this] { m_window.minimize(); });
+
+    m_window.setMainMenu(m_mainMenu.get());
+}
+
+void CalculatorWindow::openAbout()
+{
+    if (!m_about) {
+        m_about = std::make_unique<AboutDialog>(&m_window);
+        m_about->setName(tr("Calculator"));
+        m_about->setDescription(tr("A simple calculator"));
+        m_about->setIconSource("accessories-calculator");
+    }
+    m_about->show();
+}
+
+// The menu and an open About dialog are made again in the new language.
 void CalculatorWindow::retranslate()
 {
     m_window.setTitle(tr("Calculator"));
+    buildMainMenu();
+    const bool about = m_about && m_about->isShown();
+    m_about.reset();
+    if (about)
+        openAbout();
 }
