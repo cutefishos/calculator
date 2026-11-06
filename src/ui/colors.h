@@ -28,6 +28,9 @@ enum class CalculatorColor : uint16_t {
     AccentKeyRim,
     AccentKeyHovered,
     AccentKeyPressed,
+    // The = key while the window is inactive.
+    InactiveAccentKey,
+    InactiveAccentKeyRim,
     KeyShadow,
     // The glow under the = key.
     AccentKeyShadow,

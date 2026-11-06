@@ -29,6 +29,9 @@ void addCalculatorColors(ColorMixer& mixer, const Theme& theme)
     mixer[CalculatorColor::AccentKeyHovered] = dark ? lighter(ColorId::Highlight, 1.06) : darker(ColorId::Highlight, 1.05);
     mixer[CalculatorColor::AccentKeyPressed] = dark ? lighter(ColorId::Highlight, 1.14) : darker(ColorId::Highlight, 1.14);
 
+    mixer[CalculatorColor::InactiveAccentKey] = dark ? Color::rgb(0x6E6E6E) : Color::rgb(0xB8B8B8);
+    mixer[CalculatorColor::InactiveAccentKeyRim] = dark ? Color::rgb(0x8A8A8A) : Color::rgb(0xCDCDCD);
+
     mixer[CalculatorColor::KeyShadow] = dark ? Color::rgb(0x000000).withAlpha(0) : Color::rgb(0x000000).withAlpha(0.07);
     mixer[CalculatorColor::AccentKeyShadow] = withAlpha(ColorId::Highlight, dark ? 0.3 : 0.35);
 }

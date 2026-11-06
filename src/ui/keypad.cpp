@@ -9,6 +9,7 @@
 #include "ui/label.h"
 #include "ui/painter.h"
 #include "ui/path.h"
+#include "ui/window.h"
 
 #include <algorithm>
 #include <cmath>
@@ -57,6 +58,13 @@ static const KeyInfo kKeys[] = {
     {".", ".", nullptr, KeypadButton::Kind::Digit},
     {"=", nullptr, "equals", KeypadButton::Kind::Accent},
 };
+
+// The accent shows only while the window is active, as the window controls'.
+static bool isWindowActive(const View* view)
+{
+    const Window* window = view->window();
+    return !window || window->isActive();
+}
 
 static double diameterForWidth(double width)
 {
@@ -114,6 +122,11 @@ void KeypadButton::paint(Painter& painter)
         rim = CalculatorColor::OperatorKeyRim;
         break;
     case Kind::Accent:
+        if (!isWindowActive(this)) {
+            base = CalculatorColor::InactiveAccentKey;
+            rim = CalculatorColor::InactiveAccentKeyRim;
+            break;
+        }
         base = isPressed() ? CalculatorColor::AccentKeyPressed
                : m_hovered ? CalculatorColor::AccentKeyHovered
                            : CalculatorColor::AccentKey;
@@ -237,7 +250,7 @@ void Keypad::paint(Painter& painter)
     for (const KeypadButton* button : m_buttons) {
         const RectF rect = button->geometry();
         const double diameter = rect.width;
-        if (button->kind() == KeypadButton::Kind::Accent)
+        if (button->kind() == KeypadButton::Kind::Accent && isWindowActive(this))
             painter.drawShadow(rect, diameter / 2, diameter * 0.09, color(CalculatorColor::AccentKeyShadow),
                                {0, diameter * 0.07});
         else

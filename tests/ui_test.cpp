@@ -458,6 +458,39 @@ TEST(UiTest, HistoryShowsTwoWholeRows)
     EXPECT_GE(windowRect(rows->children()[3].get()).y - area.y, spacing - 1);
 }
 
+TEST(UiTest, EqualsKeyGreysWhenInactive)
+{
+    Fixture fixture(1.5);
+    Window& window = fixture.window.window();
+    const int width = int(window.size().width);
+    const int height = int(window.size().height);
+    // Inside a plate, clear of its rim and its label; and an empty spot above the history.
+    const auto plate = [&](const std::string& key) {
+        const RectF rect = windowRect(fixture.window.keypad()->button(key));
+        return window.grab().pixel(int((rect.x + rect.width * 0.3) * 1.5), int((rect.y + rect.height * 0.7) * 1.5));
+    };
+    const auto background = [&] { return window.grab().pixel(30, 90); };
+
+    TestInput::configure(window, width, height, {.activated = true});
+    fixture.layout();
+    EXPECT_EQ(plate("7"), color(CalculatorColor::Key));
+    EXPECT_EQ(plate("×"), color(CalculatorColor::OperatorKey));
+    EXPECT_EQ(plate("="), color(CalculatorColor::AccentKey));
+    const Color active = background();
+
+    TestInput::configure(window, width, height, {.activated = false});
+    fixture.layout();
+    EXPECT_EQ(plate("7"), color(CalculatorColor::Key));
+    EXPECT_EQ(plate("×"), color(CalculatorColor::OperatorKey));
+    EXPECT_EQ(plate("="), color(CalculatorColor::InactiveAccentKey));
+    EXPECT_EQ(background(), active);
+
+    TestInput::configure(window, width, height, {.activated = true});
+    fixture.layout();
+    EXPECT_EQ(plate("7"), color(CalculatorColor::Key));
+    EXPECT_EQ(plate("="), color(CalculatorColor::AccentKey));
+}
+
 TEST(UiTest, LayoutIsStable)
 {
     TestInput::setVerifiesLayout(true);
