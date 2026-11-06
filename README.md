@@ -1,10 +1,10 @@
 # Calculator
 
-The calculator of Cutefish Desktop: a simple keypad calculator for + − × ÷
-and percentages (200 + 10% is 220), entered with the mouse or the keyboard,
-with a short history of the calculations. It computes in decimal, so
-0.1 + 0.2 is 0.3: whole numbers keep every digit up to 10^1000, everything
-else 160 significant digits.
+A simple calculator for Cutefish Desktop, and nothing more: + − × ÷ and
+percentages on a keypad you can also drive from the keyboard, with the last
+calculations above the one you are typing.
+
+<img src="screenshots/calculator.png" alt="Calculator" width="289">
 
 ## Dependencies
 
