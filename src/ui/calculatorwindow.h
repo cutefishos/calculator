@@ -24,6 +24,7 @@ class CalculatorWindow
 {
 public:
     static constexpr double HeaderHeight = 40;
+    static constexpr cutefish::ui::SizeF Size = {280, 512};
 
     CalculatorWindow();
     ~CalculatorWindow();

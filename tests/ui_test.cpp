@@ -38,7 +38,7 @@ namespace {
 
 struct Fixture
 {
-    explicit Fixture(double scale = 1, SizeF size = {350, 550})
+    explicit Fixture(double scale = 1, SizeF size = CalculatorWindow::Size)
     {
         window.window().setScale(scale);
         window.window().resize(size);
@@ -66,44 +66,43 @@ struct Fixture
 TEST(UiTest, Layout)
 {
     for (const double scale : {1.0, 1.5, 2.0}) {
-        for (const SizeF size : {SizeF{350, 550}, SizeF{520, 760}}) {
+        for (const SizeF size : {CalculatorWindow::Size}) {
             Fixture fixture(scale, size);
             const double contentHeight = size.height - CalculatorWindow::HeaderHeight;
-            const double display = std::round(contentHeight * 0.35);
+
+            const RectF keypad = windowRect(fixture.window.keypad());
+            EXPECT_EQ(keypad.bottom(), size.height);
+            EXPECT_EQ(keypad.width, size.width);
+            EXPECT_LE(keypad.height, std::round(contentHeight * 0.72));
 
             const RectF expression = windowRect(fixture.window.expressionField());
-            EXPECT_EQ(expression.y, CalculatorWindow::HeaderHeight + display - 50);
-            EXPECT_EQ(expression.height, 50);
+            EXPECT_EQ(expression.bottom(), keypad.y);
+            EXPECT_EQ(expression.height, 40);
             EXPECT_EQ(expression.width, size.width);
             const RectF history = windowRect(fixture.window.history());
             EXPECT_EQ(history.y, CalculatorWindow::HeaderHeight);
             EXPECT_EQ(history.bottom(), expression.y);
 
-            const RectF keypad = windowRect(fixture.window.keypad());
-            const double spacing = Theme::current().smallSpacing;
-            EXPECT_EQ(keypad.y, expression.bottom() + spacing);
-            EXPECT_EQ(keypad.bottom(), size.height);
-            EXPECT_EQ(keypad.width, size.width);
-
-            // Four columns and five rows of equal cells, one pixel apart, inside the margins.
+            // Four columns and five rows of round keys, evenly spaced and centred.
             const auto& buttons = fixture.window.keypad()->buttons();
             ASSERT_EQ(buttons.size(), 20u);
+            const RectF first = windowRect(buttons[0]);
+            const RectF last = windowRect(buttons[19]);
+            const double gap = windowRect(buttons[1]).x - first.right();
+            EXPECT_GT(gap, 0);
             for (size_t i = 0; i < buttons.size(); ++i) {
                 const RectF cell = windowRect(buttons[i]);
-                const RectF first = windowRect(buttons[0]);
                 EXPECT_DOUBLE_EQ(cell.width, first.width) << i;
-                EXPECT_DOUBLE_EQ(cell.height, first.height) << i;
-                if (i % 4 == 0)
-                    EXPECT_DOUBLE_EQ(cell.x, spacing) << i;
-                if (i % 4 == 3)
-                    EXPECT_NEAR(size.width - cell.right(), spacing, 1e-9) << i;
+                EXPECT_DOUBLE_EQ(cell.height, cell.width) << i;
                 if (i % 4 != 0)
-                    EXPECT_NEAR(cell.x - windowRect(buttons[i - 1]).right(), 1, 1e-9) << i;
+                    EXPECT_NEAR(cell.x - windowRect(buttons[i - 1]).right(), gap, 1e-9) << i;
                 if (i >= 4)
-                    EXPECT_NEAR(cell.y - windowRect(buttons[i - 4]).bottom(), 1, 1e-9) << i;
+                    EXPECT_NEAR(cell.y - windowRect(buttons[i - 4]).bottom(), gap, 1e-9) << i;
             }
-            EXPECT_DOUBLE_EQ(windowRect(buttons[0]).y, keypad.y + spacing);
-            EXPECT_NEAR(keypad.bottom() - windowRect(buttons[19]).bottom(), spacing, 1e-9);
+            EXPECT_NEAR(first.x - keypad.x, keypad.right() - last.right(), 1e-9);
+            EXPECT_NEAR(first.y - keypad.y, keypad.bottom() - last.bottom(), 1e-9);
+            EXPECT_GE(first.x - keypad.x, gap);
+            EXPECT_GE(first.y - keypad.y, gap);
 
             // The plates, as painted, differ by at most a device pixel.
             int smallest = INT32_MAX;
@@ -135,8 +134,8 @@ TEST(UiTest, LabelsCentredOnKeys)
             const Rect ink = TestInput::inkRect(*content, scale);
             ASSERT_GT(ink.width, 0) << button->name();
             const std::string& name = button->name();
-            // The font draws a 1 left of the middle of its advance.
-            if (name != "key 1")
+            // The font draws a 1 and AC left of the middle of their advance.
+            if (name != "key 1" && name != "key AC")
                 EXPECT_NEAR((ink.x + ink.width / 2.0) / scale, rect.width / 2, 1 / scale) << name;
             if (name.size() == 5 && name[4] >= '0' && name[4] <= '9')
                 EXPECT_NEAR((ink.y + ink.height / 2.0) / scale, rect.height / 2, 1) << name;
@@ -168,10 +167,10 @@ TEST(UiTest, KeypadCalculates)
     EXPECT_EQ(fixture.text(), "52.6");
 
     // C empties the expression, then the history.
-    fixture.click("C");
+    fixture.click("AC");
     EXPECT_EQ(fixture.text(), "");
     EXPECT_EQ(fixture.window.history()->count(), 2u);
-    fixture.click("C");
+    fixture.click("AC");
     EXPECT_EQ(fixture.window.history()->count(), 0u);
 
     // An expression with no result stays as it is.
@@ -181,13 +180,13 @@ TEST(UiTest, KeypadCalculates)
     EXPECT_EQ(fixture.window.history()->count(), 0u);
 }
 
-TEST(UiTest, ParenthesisKey)
+TEST(UiTest, DoubleZeroKey)
 {
     Fixture fixture;
-    for (const char* key : {"2", "()", "3", "+", "4", "()", "="})
+    for (const char* key : {"3", "00", "-", "1", "="})
         fixture.click(key);
-    EXPECT_EQ(fixture.window.calculator().history().back(), "2(3+4) = 14");
-    EXPECT_EQ(fixture.text(), "14");
+    EXPECT_EQ(fixture.window.calculator().history().back(), "300-1 = 299");
+    EXPECT_EQ(fixture.text(), "299");
 }
 
 TEST(UiTest, KeysKeepTheFocusAndTheCursor)
@@ -251,7 +250,7 @@ TEST(UiTest, ExpressionHugsTheRightEdge)
     EXPECT_EQ(rect.width, row.width);
 
     // A press in the empty part puts the cursor at the start.
-    fixture.click("C");
+    fixture.click("AC");
     fixture.click("5");
     TestInput::click(fixture.window.window(), {row.x + 20, row.y + row.height / 2});
     fixture.layout();
@@ -267,7 +266,7 @@ TEST(UiTest, HistoryScrollsToTheLatest)
         fixture.click("+");
         fixture.click("1");
         fixture.click("=");
-        fixture.click("C");
+        fixture.click("AC");
     }
     HistoryView* history = fixture.window.history();
     EXPECT_EQ(history->count(), 12u);
@@ -305,10 +304,8 @@ TEST(UiTest, LayoutIsStable)
     TestInput::setVerifiesLayout(true);
     {
         Fixture fixture(1.25);
-        for (const char* key : {"1", "+", "2", "=", "C"})
+        for (const char* key : {"1", "+", "2", "=", "AC"})
             fixture.click(key);
-        fixture.window.window().resize({400, 600});
-        fixture.layout();
     }
     EXPECT_EQ(TestInput::layoutMismatches(), 0);
     TestInput::setVerifiesLayout(false);
@@ -319,9 +316,12 @@ TEST(UiTest, Themes)
     for (const bool dark : {false, true}) {
         Theme::setCurrent(dark ? Theme::dark() : Theme::light());
         const Color background = color(CalculatorColor::WindowBackground);
-        EXPECT_EQ(background, (dark ? Color{46, 46, 46, 242} : Color{240, 238, 241, 242}));
+        EXPECT_EQ(background, (dark ? Color{0, 0, 0, 242} : Color{232, 232, 232, 242}));
         EXPECT_NE(color(CalculatorColor::KeyHovered), color(CalculatorColor::Key));
         EXPECT_NE(color(CalculatorColor::KeyPressed), color(CalculatorColor::KeyHovered));
+        EXPECT_NE(color(CalculatorColor::OperatorKeyHovered), color(CalculatorColor::OperatorKey));
+        EXPECT_NE(color(CalculatorColor::OperatorKeyPressed), color(CalculatorColor::OperatorKeyHovered));
+        EXPECT_NE(color(CalculatorColor::AccentKeyPressed), color(CalculatorColor::AccentKeyHovered));
         Fixture fixture(1.5);
         fixture.click("1");
         EXPECT_EQ(fixture.text(), "1");

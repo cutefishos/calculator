@@ -15,7 +15,7 @@ class TextField;
 class ExpressionField : public cutefish::ui::View
 {
 public:
-    static constexpr double FontSize = 24;
+    static constexpr double FontSize = 20;
 
     ExpressionField();
 

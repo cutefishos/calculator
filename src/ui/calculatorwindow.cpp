@@ -20,9 +20,9 @@
 using namespace cutefish::ui;
 using cutefish::i18n::tr;
 
-// The history and the expression take this share of the height under the header.
-static constexpr double kDisplayShare = 0.35;
-static constexpr double kExpressionHeight = 50;
+// The keypad takes at most this share of the height under the header.
+static constexpr double kKeypadShare = 0.72;
+static constexpr double kExpressionHeight = 40;
 
 class CalculatorWindow::Root : public View
 {
@@ -33,6 +33,7 @@ public:
         , expression(addChild<ExpressionField>())
         , keypad(addChild<Keypad>())
     {
+        header->setMaximizeEnabled(false);
     }
 
     bool acceptsPointer() const override { return false; }
@@ -47,12 +48,12 @@ protected:
     {
         const double width = geometry().width;
         const double height = std::max(0.0, geometry().height - HeaderHeight);
-        const double display = std::round(height * kDisplayShare);
-        const double spacing = Theme::current().smallSpacing;
+        const double keys = std::round(std::min(Keypad::fittingHeight(width), height * kKeypadShare));
+        const double display = height - keys;
         header->setGeometry({0, 0, width, HeaderHeight});
         history->setGeometry({0, HeaderHeight, width, std::max(0.0, display - kExpressionHeight)});
         expression->setGeometry({0, HeaderHeight + display - kExpressionHeight, width, kExpressionHeight});
-        keypad->setGeometry({0, HeaderHeight + display + spacing, width, std::max(0.0, height - display - spacing)});
+        keypad->setGeometry({0, HeaderHeight + display, width, keys});
 
         if (Window* window = this->window())
             window->setBackgroundBlur(localRect(), Theme::current().windowRadius);
@@ -61,9 +62,10 @@ protected:
 
 CalculatorWindow::CalculatorWindow()
 {
-    m_window.resize({350, 550});
-    m_window.setMinimumSize({350, 550});
-    m_window.setRestoresSize("Main");
+    m_window.resize(Size);
+    m_window.setMinimumSize(Size);
+    m_window.setMaximumSize(Size);
+    m_window.setUserResizable(false);
     m_window.setBackgroundColor(CalculatorColor::WindowBackground);
     auto root = std::make_unique<Root>();
     m_root = root.get();
@@ -117,7 +119,7 @@ void CalculatorWindow::press(const std::string& key)
             field->setText(*result);
             m_root->history->setEntries(m_calculator.history());
         }
-    } else if (key == "C") {
+    } else if (key == "AC") {
         if (!text.empty()) {
             field->clear();
         } else {
@@ -126,8 +128,6 @@ void CalculatorWindow::press(const std::string& key)
         }
     } else if (key == Keypad::Backspace) {
         edit(Calculator::backspace(text, anchor, cursor));
-    } else if (key == "()") {
-        edit(Calculator::insert(text, anchor, cursor, Calculator::parenthesis(text, std::min(anchor, cursor))));
     } else {
         edit(Calculator::insert(text, anchor, cursor, key));
     }
