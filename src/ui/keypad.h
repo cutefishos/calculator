@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "calculator.h"
+
 #include "ui/view.h"
 
 #include <functional>
@@ -62,10 +64,10 @@ private:
 class Keypad : public cutefish::ui::View
 {
 public:
-    // What the keys send: the digits and operators as they read ("-" for the
-    // minus sign), "CLEAR" for C/AC and "BACKSPACE" for the backspace key.
-    static constexpr const char* Clear = "CLEAR";
-    static constexpr const char* Backspace = "BACKSPACE";
+    // What the keys send: the digits and operators as they read, Clear for
+    // C/AC and Backspace for the backspace key, as the calculator takes them.
+    static constexpr const char* Clear = Calculator::Clear.data();
+    static constexpr const char* Backspace = Calculator::Backspace.data();
 
     Keypad();
 

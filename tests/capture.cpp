@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 
     const std::string name = directory + "/calculator" + (dark ? "-dark" : "");
     window.window().grab().savePng(name + "-empty.png");
-    for (const char* key : {"7", "+", "8", "=", Keypad::Clear, "1", "2", "×", "3", "=", Keypad::Clear, "1", "÷", "3", "=", "-", "1", "0", "%", "="})
+    for (const char* key : {"7", "+", "8", "=", Keypad::Clear, "1", "2", "×", "3", "=", Keypad::Clear, "1", "÷", "3", "=", "−", "1", "0", "%", "="})
         window.press(key);
     for (const char* key : {"2", "+", "3"})
         window.press(key);

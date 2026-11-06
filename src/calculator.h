@@ -7,15 +7,33 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
-// The calculator apart from its window: what = does, the history of
-// calculations, and what backspace does to the expression.
+// The calculator apart from its window: the expression the keys build, what
+// = does, and the history of calculations.
 class Calculator
 {
 public:
     // Results show at most this many decimals.
     static constexpr int DisplayDecimals = 10;
+
+    // The keys: the digits, "00", ".", the operators + − × ÷, "%", "=" and these.
+    static constexpr std::string_view Clear = "CLEAR";
+    static constexpr std::string_view Backspace = "BACKSPACE";
+
+    // What a key does to the expression, by what it ends with:
+    // - an operator on an empty expression follows a 0, replaces an operator
+    //   before it, drops a point before it, and goes on from a result;
+    // - a digit replaces a lone 0, and starts a new expression after a result;
+    // - 00 is a single 0 where a number starts, and nothing after a lone 0;
+    // - a point is 0. where a number starts, and nothing in a number with one;
+    // - % follows a number only, once;
+    // - = needs an expression that does not end with an operator;
+    // - Clear empties the expression, or the history when it is empty.
+    // Keys that do nothing there are ignored.
+    void press(std::string_view key);
+    const std::string& expression() const { return m_expression; }
 
     // The result as shown, or nothing when the expression has none. Adds
     // "expression = result" to the history unless the two are the same. An
@@ -33,6 +51,9 @@ public:
     static std::string backspace(const std::string& text);
 
 private:
+    std::string m_expression;
+    // The expression is the result of the last =.
+    bool m_showingResult = false;
     Evaluator m_evaluator;
     Evaluator::Result m_lastResult;
     std::vector<std::string> m_history;

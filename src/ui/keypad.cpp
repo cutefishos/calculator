@@ -47,7 +47,7 @@ static const KeyInfo kKeys[] = {
     {"4", "4", nullptr, KeypadButton::Kind::Digit},
     {"5", "5", nullptr, KeypadButton::Kind::Digit},
     {"6", "6", nullptr, KeypadButton::Kind::Digit},
-    {"-", nullptr, "minus", KeypadButton::Kind::Operator},
+    {"−", nullptr, "minus", KeypadButton::Kind::Operator},
     {"1", "1", nullptr, KeypadButton::Kind::Digit},
     {"2", "2", nullptr, KeypadButton::Kind::Digit},
     {"3", "3", nullptr, KeypadButton::Kind::Digit},

@@ -46,7 +46,9 @@ static std::string keypadKey(const KeyEvent& event)
         return "×";
     if (text == "/")
         return "÷";
-    if (text == "+" || text == "-" || text == "%" || text == "=")
+    if (text == "-")
+        return "−";
+    if (text == "+" || text == "%" || text == "=")
         return text;
     return {};
 }
@@ -150,27 +152,13 @@ Keypad* CalculatorWindow::keypad() const
 
 void CalculatorWindow::press(const std::string& key)
 {
-    ExpressionField* field = m_root->expression;
-    const std::string text = field->text();
-    if (key == "=") {
-        if (const std::optional<std::string> result = m_calculator.calculate(text)) {
-            field->setText(*result);
-            m_root->history->setEntries(m_calculator.history());
-        }
-    } else if (key == Keypad::Clear) {
-        if (!text.empty()) {
-            field->setText({});
-        } else {
-            m_calculator.clearHistory();
-            m_root->history->setEntries(m_calculator.history());
-        }
-    } else if (key == Keypad::Backspace) {
-        field->setText(Calculator::backspace(text));
-    } else {
-        field->setText(text + key);
-    }
+    m_calculator.press(key);
+    const std::string& expression = m_calculator.expression();
+    m_root->expression->setText(expression);
+    if (m_root->history->count() != m_calculator.history().size())
+        m_root->history->setEntries(m_calculator.history());
     // C clears the expression; AC, on an empty one, the history.
-    m_root->keypad->button(Keypad::Clear)->setText(field->text().empty() ? "AC" : "C");
+    m_root->keypad->button(Keypad::Clear)->setText(expression.empty() ? "AC" : "C");
     // A click on the keypad keeps the keyboard here.
     m_root->setFocus();
 }

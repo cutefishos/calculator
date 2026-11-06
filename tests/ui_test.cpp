@@ -162,7 +162,7 @@ TEST(UiTest, KeypadCalculates)
     EXPECT_EQ(fixture.window.history()->count(), 1u);
     EXPECT_EQ(fixture.window.calculator().history().back(), "7×8 = 56");
 
-    fixture.click("-");
+    fixture.click("−");
     fixture.click("6");
     fixture.click("%");
     fixture.click("=");
@@ -201,9 +201,9 @@ TEST(UiTest, KeypadCalculates)
 TEST(UiTest, DoubleZeroKey)
 {
     Fixture fixture;
-    for (const char* key : {"3", "00", "-", "1", "="})
+    for (const char* key : {"3", "00", "−", "1", "="})
         fixture.click(key);
-    EXPECT_EQ(fixture.window.calculator().history().back(), "300-1 = 299");
+    EXPECT_EQ(fixture.window.calculator().history().back(), "300−1 = 299");
     EXPECT_EQ(fixture.text(), "299");
 }
 
@@ -345,6 +345,47 @@ TEST(UiTest, ExpressionStaysOnTheRightEdge)
         for (double x = row.x + 1; x < row.x + margin - 1; x += 1 / scale)
             EXPECT_FALSE(inked(x)) << scale << " " << x;
         EXPECT_TRUE(inked(row.x + margin + 2)) << scale;
+    }
+}
+
+TEST(UiTest, SignsKeepTheTextOnItsLine)
+{
+    // × and ÷ come from a fallback font with taller metrics; the digits stay put.
+    for (const double scale : {1.0, 1.5, 1.75}) {
+        Fixture fixture(scale);
+        View* label = fixture.window.expressionField()->label();
+        const auto inkTop = [&] {
+            const Rect ink = TestInput::inkRect(*label, scale);
+            return windowRect(label).y * scale + ink.y;
+        };
+        const auto inkBottom = [&] {
+            const Rect ink = TestInput::inkRect(*label, scale);
+            return windowRect(label).y * scale + ink.y + ink.height;
+        };
+        fixture.click("1");
+        fixture.click("2");
+        const double top = inkTop();
+        const double bottom = inkBottom();
+        for (const char* key : {"×", "÷", "+", "−"}) {
+            fixture.click(key);
+            EXPECT_NEAR(inkTop(), top, 0.01) << scale << " " << key;
+            EXPECT_NEAR(inkBottom(), bottom, 0.01) << scale << " " << key;
+            fixture.click(Keypad::Backspace);
+        }
+
+        // History rows with and without the signs: one height, the text at one place in them.
+        for (const char* key : {"+", "3", "=", "×", "2", "=", "÷", "4", "="})
+            fixture.click(key);
+        View* rows = fixture.window.history()->contentView();
+        ASSERT_EQ(rows->children().size(), 3u);
+        std::vector<double> offsets;
+        for (const auto& child : rows->children()) {
+            const Rect ink = TestInput::inkRect(*child, scale);
+            offsets.push_back(child->geometry().y * scale + ink.y + ink.height);
+        }
+        const double pitch = HistoryView::rowHeight() * scale;
+        EXPECT_NEAR(offsets[1] - offsets[0], pitch, 0.01) << scale;
+        EXPECT_NEAR(offsets[2] - offsets[1], pitch, 0.01) << scale;
     }
 }
 
