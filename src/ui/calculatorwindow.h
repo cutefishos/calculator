@@ -24,7 +24,11 @@ class CalculatorWindow
 {
 public:
     static constexpr double HeaderHeight = 40;
-    static constexpr cutefish::ui::SizeF Size = {280, 512};
+    static constexpr double Width = 280;
+    static constexpr double ExpressionHeight = 40;
+
+    // Fixed: the history's visible rows, the expression and the keypad at the width.
+    static cutefish::ui::SizeF size();
 
     CalculatorWindow();
     ~CalculatorWindow();

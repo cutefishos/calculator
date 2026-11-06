@@ -38,7 +38,7 @@ namespace {
 
 struct Fixture
 {
-    explicit Fixture(double scale = 1, SizeF size = CalculatorWindow::Size)
+    explicit Fixture(double scale = 1, SizeF size = CalculatorWindow::size())
     {
         window.window().setScale(scale);
         window.window().resize(size);
@@ -66,18 +66,18 @@ struct Fixture
 TEST(UiTest, Layout)
 {
     for (const double scale : {1.0, 1.5, 2.0}) {
-        for (const SizeF size : {CalculatorWindow::Size}) {
+        for (const SizeF size : {CalculatorWindow::size()}) {
             Fixture fixture(scale, size);
             const double contentHeight = size.height - CalculatorWindow::HeaderHeight;
 
             const RectF keypad = windowRect(fixture.window.keypad());
             EXPECT_EQ(keypad.bottom(), size.height);
             EXPECT_EQ(keypad.width, size.width);
-            EXPECT_LE(keypad.height, std::round(contentHeight * 0.72));
+            EXPECT_DOUBLE_EQ(keypad.height, Keypad::fittingHeight(size.width));
 
             const RectF expression = windowRect(fixture.window.expressionField());
             EXPECT_EQ(expression.bottom(), keypad.y);
-            EXPECT_EQ(expression.height, 40);
+            EXPECT_EQ(expression.height, CalculatorWindow::ExpressionHeight);
             EXPECT_EQ(expression.width, size.width);
             const RectF history = windowRect(fixture.window.history());
             EXPECT_EQ(history.y, CalculatorWindow::HeaderHeight);
@@ -225,37 +225,35 @@ TEST(UiTest, Typing)
     EXPECT_EQ(fixture.window.history()->count(), 2u);
 }
 
-TEST(UiTest, ExpressionHugsTheRightEdge)
+TEST(UiTest, ExpressionStaysOnTheRightEdge)
 {
-    Fixture fixture(1.5);
-    const RectF row = windowRect(fixture.window.expressionField());
-    TextField* field = fixture.window.expression();
-    RectF rect = windowRect(field);
-    EXPECT_EQ(rect.right(), row.right());
-    const double empty = rect.width;
-    EXPECT_LT(empty, 30);
+    for (const double scale : {1.0, 1.5, 1.75}) {
+        Fixture fixture(scale);
+        const RectF row = windowRect(fixture.window.expressionField());
+        TextField* field = fixture.window.expression();
+        EXPECT_EQ(windowRect(field), row);
 
-    for (const char* key : {"1", "2", "3"})
-        fixture.click(key);
-    rect = windowRect(field);
-    EXPECT_EQ(rect.right(), row.right());
-    EXPECT_GT(rect.width, empty + 20);
-    EXPECT_LT(rect.width, row.width / 2);
+        // The text grows to the left: each key goes in front, so the last glyph
+        // stays a 1 and its right edge on the same device pixel.
+        fixture.click("1");
+        const Rect first = TestInput::inkRect(*field, scale);
+        for (const char* key : {"2", "3", "+", "4", "5", "×", "6"}) {
+            field->setCursorPosition(0);
+            fixture.click(key);
+            const Rect ink = TestInput::inkRect(*field, scale);
+            EXPECT_EQ(ink.x + ink.width, first.x + first.width) << scale << " " << fixture.text();
+            EXPECT_LT(ink.x, first.x) << scale << " " << fixture.text();
+        }
+        EXPECT_NEAR((first.x + first.width) / scale, row.width - Theme::current().largeSpacing, 3) << scale;
 
-    // A long expression fills the row and scrolls.
-    for (int i = 0; i < 40; ++i)
-        fixture.click("7");
-    rect = windowRect(field);
-    EXPECT_EQ(rect.x, row.x);
-    EXPECT_EQ(rect.width, row.width);
-
-    // A press in the empty part puts the cursor at the start.
-    fixture.click("AC");
-    fixture.click("5");
-    TestInput::click(fixture.window.window(), {row.x + 20, row.y + row.height / 2});
-    fixture.layout();
-    EXPECT_EQ(field->cursorPosition(), 0u);
-    EXPECT_TRUE(field->hasFocus());
+        // A press in the empty part puts the cursor at the start.
+        fixture.click("AC");
+        fixture.click("5");
+        TestInput::click(fixture.window.window(), {row.x + 20, row.y + row.height / 2});
+        fixture.layout();
+        EXPECT_EQ(field->cursorPosition(), 0u);
+        EXPECT_TRUE(field->hasFocus());
+    }
 }
 
 TEST(UiTest, HistoryScrollsToTheLatest)
@@ -297,6 +295,34 @@ TEST(UiTest, HistorySitsOnTheExpression)
     EXPECT_DOUBLE_EQ(windowRect(rows->children().back().get()).y - windowRect(rows->children().front().get()).bottom(),
                      2 * spacing);
     EXPECT_LT(windowRect(rows->children().front().get()).y, windowRect(rows->children().back().get()).y);
+}
+
+TEST(UiTest, HistoryShowsTwoWholeRows)
+{
+    Fixture fixture(1.5);
+    for (int i = 1; i <= 5; ++i) {
+        fixture.click(std::to_string(i));
+        fixture.click("+");
+        fixture.click("1");
+        fixture.click("=");
+        fixture.click("AC");
+    }
+    HistoryView* history = fixture.window.history();
+    const RectF area = windowRect(history);
+    View* rows = history->contentView();
+    ASSERT_EQ(rows->children().size(), 5u);
+    // The last rows' text lies inside the area, the ones before them above it.
+    const double spacing = Theme::current().largeSpacing;
+    int inside = 0;
+    for (const auto& child : rows->children()) {
+        const RectF entry = windowRect(child.get());
+        if (entry.y >= area.y && entry.bottom() <= area.bottom())
+            ++inside;
+        else
+            EXPECT_LE(entry.bottom(), area.y + spacing);
+    }
+    EXPECT_EQ(inside, HistoryView::VisibleRows);
+    EXPECT_GE(windowRect(rows->children()[3].get()).y - area.y, spacing - 1);
 }
 
 TEST(UiTest, LayoutIsStable)

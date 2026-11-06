@@ -61,6 +61,8 @@ protected:
 private:
     static double rowHeight(const Label* label) { return label->sizeHint().height + 2 * Theme::current().largeSpacing; }
 
+    friend class HistoryView;
+
     std::vector<Label*> m_labels;
 };
 
@@ -69,6 +71,12 @@ HistoryView::HistoryView()
 {
     setName("history");
     m_rows->setLayoutHints({.fillHeight = true});
+}
+
+double HistoryView::rowHeight()
+{
+    const Label label("0");
+    return HistoryRows::rowHeight(&label);
 }
 
 void HistoryView::setEntries(const std::vector<std::string>& entries)

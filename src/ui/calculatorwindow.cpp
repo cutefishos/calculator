@@ -20,10 +20,6 @@
 using namespace cutefish::ui;
 using cutefish::i18n::tr;
 
-// The keypad takes at most this share of the height under the header.
-static constexpr double kKeypadShare = 0.72;
-static constexpr double kExpressionHeight = 40;
-
 class CalculatorWindow::Root : public View
 {
 public:
@@ -48,11 +44,11 @@ protected:
     {
         const double width = geometry().width;
         const double height = std::max(0.0, geometry().height - HeaderHeight);
-        const double keys = std::round(std::min(Keypad::fittingHeight(width), height * kKeypadShare));
+        const double keys = std::min(height, Keypad::fittingHeight(width));
         const double display = height - keys;
         header->setGeometry({0, 0, width, HeaderHeight});
-        history->setGeometry({0, HeaderHeight, width, std::max(0.0, display - kExpressionHeight)});
-        expression->setGeometry({0, HeaderHeight + display - kExpressionHeight, width, kExpressionHeight});
+        history->setGeometry({0, HeaderHeight, width, std::max(0.0, display - ExpressionHeight)});
+        expression->setGeometry({0, HeaderHeight + display - ExpressionHeight, width, ExpressionHeight});
         keypad->setGeometry({0, HeaderHeight + display, width, keys});
 
         if (Window* window = this->window())
@@ -60,11 +56,18 @@ protected:
     }
 };
 
+SizeF CalculatorWindow::size()
+{
+    const double history = HistoryView::VisibleRows * HistoryView::rowHeight();
+    return {Width, std::ceil(HeaderHeight + history + ExpressionHeight + Keypad::fittingHeight(Width))};
+}
+
 CalculatorWindow::CalculatorWindow()
 {
-    m_window.resize(Size);
-    m_window.setMinimumSize(Size);
-    m_window.setMaximumSize(Size);
+    const SizeF size = CalculatorWindow::size();
+    m_window.resize(size);
+    m_window.setMinimumSize(size);
+    m_window.setMaximumSize(size);
     m_window.setUserResizable(false);
     m_window.setBackgroundColor(CalculatorColor::WindowBackground);
     auto root = std::make_unique<Root>();

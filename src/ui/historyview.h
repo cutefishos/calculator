@@ -15,7 +15,13 @@ class HistoryRows;
 class HistoryView : public cutefish::ui::ScrollView
 {
 public:
+    // Rows the window keeps in sight above the expression.
+    static constexpr int VisibleRows = 2;
+
     HistoryView();
+
+    // A row's height: its text with the large spacing above and below.
+    static double rowHeight();
 
     void setEntries(const std::vector<std::string>& entries);
     size_t count() const;
