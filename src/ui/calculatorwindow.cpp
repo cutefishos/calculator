@@ -165,9 +165,9 @@ void CalculatorWindow::press(const std::string& key)
             m_root->history->setEntries(m_calculator.history());
         }
     } else if (key == Keypad::Backspace) {
-        field->setText(Calculator::backspace(text, text.size(), text.size()).text);
+        field->setText(Calculator::backspace(text));
     } else {
-        field->setText(Calculator::insert(text, text.size(), text.size(), key).text);
+        field->setText(text + key);
     }
     // A click on the keypad keeps the keyboard here.
     m_root->setFocus();

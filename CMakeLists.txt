@@ -17,7 +17,6 @@ add_library(calculator-engine STATIC
     src/calculator.cpp
     src/decimal.cpp
     src/evaluator.cpp
-    src/mathfunctions.cpp
 )
 target_include_directories(calculator-engine PUBLIC src)
 

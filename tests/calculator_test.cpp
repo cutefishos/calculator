@@ -32,67 +32,17 @@ TEST(CalculatorTest, GoesOnFromTheFullResult)
     // The result typed again by hand elsewhere in the expression is taken as typed.
     EXPECT_EQ(calculator.calculate("1÷3"), "0.3333333333");
     EXPECT_EQ(calculator.calculate("3×0.3333333333"), "0.9999999999");
-    EXPECT_EQ(calculator.calculate("2^0.5"), "1.4142135624");
-    EXPECT_EQ(calculator.calculate("1.4142135624^2"), "2");
-}
-
-TEST(CalculatorTest, Insert)
-{
-    Calculator::Edit edit = Calculator::insert("12", 2, 2, "+");
-    EXPECT_EQ(edit.text, "12+");
-    EXPECT_EQ(edit.cursor, 3u);
-    edit = Calculator::insert("12", 1, 1, "×");
-    EXPECT_EQ(edit.text, "1×2");
-    EXPECT_EQ(edit.cursor, 3u);
-    // A selection is replaced, whichever end the cursor is at.
-    edit = Calculator::insert("1234", 1, 3, "9");
-    EXPECT_EQ(edit.text, "194");
-    EXPECT_EQ(edit.cursor, 2u);
-    edit = Calculator::insert("1234", 3, 1, "9");
-    EXPECT_EQ(edit.text, "194");
-    edit = Calculator::insert("12", 9, 9, "3");
-    EXPECT_EQ(edit.text, "123");
+    // Percent goes on from the full value too.
+    EXPECT_EQ(calculator.calculate("2÷3"), "0.6666666667");
+    EXPECT_EQ(calculator.calculate("0.6666666667×150%"), "1");
 }
 
 TEST(CalculatorTest, Backspace)
 {
-    Calculator::Edit edit = Calculator::backspace("123", 3, 3);
-    EXPECT_EQ(edit.text, "12");
-    EXPECT_EQ(edit.cursor, 2u);
-    edit = Calculator::backspace("123", 1, 1);
-    EXPECT_EQ(edit.text, "23");
-    EXPECT_EQ(edit.cursor, 0u);
-    edit = Calculator::backspace("123", 0, 0);
-    EXPECT_EQ(edit.text, "123");
-    EXPECT_EQ(edit.cursor, 0u);
+    EXPECT_EQ(Calculator::backspace("123"), "12");
+    EXPECT_EQ(Calculator::backspace("1"), "");
+    EXPECT_EQ(Calculator::backspace(""), "");
     // A character of several bytes goes whole.
-    edit = Calculator::backspace("6×", 3, 3);
-    EXPECT_EQ(edit.text, "6");
-    EXPECT_EQ(edit.cursor, 1u);
-    edit = Calculator::backspace("1234", 3, 1);
-    EXPECT_EQ(edit.text, "14");
-    EXPECT_EQ(edit.cursor, 1u);
-}
-
-TEST(CalculatorTest, Parenthesis)
-{
-    const auto at = [](const std::string& text) { return Calculator::parenthesis(text, text.size()); };
-    EXPECT_EQ(at(""), "(");
-    EXPECT_EQ(at("2"), "(");
-    EXPECT_EQ(at("(2"), ")");
-    EXPECT_EQ(at("(2+"), "(");
-    EXPECT_EQ(at("(2)"), "(");
-    EXPECT_EQ(at("((2)"), ")");
-    EXPECT_EQ(at("(sin"), "(");
-    EXPECT_EQ(at("(pi"), ")");
-    EXPECT_EQ(at("(2e"), ")");
-    EXPECT_EQ(at("(x"), ")");
-    EXPECT_EQ(at("(2."), ")");
-    EXPECT_EQ(at("(5%"), ")");
-    EXPECT_EQ(at("(3!"), ")");
-    EXPECT_EQ(at("(2π"), ")");
-    EXPECT_EQ(at("(2×"), "(");
-    EXPECT_EQ(at("(2 "), ")");
-    EXPECT_EQ(Calculator::parenthesis("(2)", 2), ")");
-    EXPECT_EQ(Calculator::parenthesis("(2)", 0), "(");
+    EXPECT_EQ(Calculator::backspace("6×"), "6");
+    EXPECT_EQ(Calculator::backspace("6÷2"), "6÷");
 }

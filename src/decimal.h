@@ -22,8 +22,6 @@ public:
 
     // Decimal digits only; nullopt for anything else or an empty string.
     static std::optional<Natural> fromDigits(std::string_view digits);
-    // Digits in base 2 to 16, either case.
-    static std::optional<Natural> fromDigits(std::string_view digits, unsigned radix);
     static Natural powerOfTen(unsigned exponent);
 
     bool isZero() const { return m_limbs.empty(); }
@@ -33,9 +31,6 @@ public:
     // The trailing decimal zeros; 0 has none.
     unsigned trailingZeros() const;
     std::string toString() const;
-    // The value when it fits.
-    std::optional<uint64_t> toUint64() const;
-    const std::vector<uint32_t>& limbs() const { return m_limbs; }
 
     std::strong_ordering operator<=>(const Natural& other) const;
     bool operator==(const Natural& other) const = default;
@@ -81,13 +76,6 @@ public:
     const Natural& coefficient() const { return m_coefficient; }
     int64_t exponent() const { return m_exponent; }
 
-    // The value when it is a whole number that fits.
-    std::optional<int64_t> toInt64() const;
-    // Close enough for an estimate; ±infinity or 0 outside double's range.
-    double toDouble() const;
-    // Seventeen significant digits of a finite double.
-    static Decimal fromDouble(double value);
-
     // Plain digits, as many as there are; no exponent.
     std::string toString() const;
     // At most the given decimals, rounded half away from zero, trailing zeros
@@ -95,7 +83,6 @@ public:
     std::string toFixed(int decimals) const;
 
     Decimal operator-() const;
-    Decimal abs() const;
     std::strong_ordering operator<=>(const Decimal& other) const;
     bool operator==(const Decimal& other) const;
 
@@ -113,18 +100,9 @@ public:
     // Rounded half to even to the significant digits.
     Decimal rounded(int digits) const;
 
-    enum class Rounding {
-        // Toward zero.
-        Truncate,
-        Floor,
-        Ceiling,
-        // Halves away from zero.
-        HalfAwayFromZero,
-    };
-    // Rounded to the decimals after the point (negative: before it).
-    Decimal roundedToDecimals(int64_t decimals, Rounding rounding) const;
-
 private:
+    // Rounded half away from zero to the decimals after the point.
+    Decimal roundedToDecimals(int64_t decimals) const;
     // Drops trailing zeros of the coefficient into the exponent.
     void normalize();
 

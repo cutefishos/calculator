@@ -24,10 +24,6 @@ TEST(NaturalTest, DigitsRoundTrip)
     EXPECT_EQ(Natural::fromDigits("000123")->toString(), "123");
     EXPECT_FALSE(Natural::fromDigits(""));
     EXPECT_FALSE(Natural::fromDigits("12a"));
-    EXPECT_EQ(Natural::fromDigits("ff", 16)->toString(), "255");
-    EXPECT_EQ(Natural::fromDigits("1010", 2)->toString(), "10");
-    EXPECT_EQ(Natural::fromDigits("777", 8)->toString(), "511");
-    EXPECT_FALSE(Natural::fromDigits("2", 2));
 }
 
 TEST(NaturalTest, Counts)
@@ -38,8 +34,6 @@ TEST(NaturalTest, Counts)
     EXPECT_EQ(Natural::powerOfTen(25).digitCount(), 26u);
     EXPECT_EQ(Natural::powerOfTen(25).trailingZeros(), 25u);
     EXPECT_EQ(Natural(120).trailingZeros(), 1u);
-    EXPECT_EQ(Natural(UINT64_MAX).toUint64(), UINT64_MAX);
-    EXPECT_FALSE((Natural(UINT64_MAX) + Natural(1)).toUint64());
 }
 
 TEST(NaturalTest, Arithmetic)
@@ -138,17 +132,6 @@ TEST(DecimalTest, Rounding)
     EXPECT_EQ(parsed("12350").rounded(3).toString(), "12400");
     EXPECT_EQ(parsed("12450").rounded(3).toString(), "12400");
     EXPECT_EQ(parsed("99999").rounded(3).toString(), "100000");
-    using Rounding = Decimal::Rounding;
-    EXPECT_EQ(parsed("2.7").roundedToDecimals(0, Rounding::Truncate).toString(), "2");
-    EXPECT_EQ(parsed("-2.7").roundedToDecimals(0, Rounding::Truncate).toString(), "-2");
-    EXPECT_EQ(parsed("-2.1").roundedToDecimals(0, Rounding::Floor).toString(), "-3");
-    EXPECT_EQ(parsed("2.1").roundedToDecimals(0, Rounding::Ceiling).toString(), "3");
-    EXPECT_EQ(parsed("-2.1").roundedToDecimals(0, Rounding::Ceiling).toString(), "-2");
-    EXPECT_EQ(parsed("3.14159").roundedToDecimals(2, Rounding::HalfAwayFromZero).toString(), "3.14");
-    EXPECT_EQ(parsed("1250").roundedToDecimals(-2, Rounding::HalfAwayFromZero).toString(), "1300");
-    EXPECT_EQ(parsed("0.001").roundedToDecimals(0, Rounding::Ceiling).toString(), "1");
-    EXPECT_EQ(parsed("-1e-900").roundedToDecimals(0, Rounding::Floor).toString(), "-1");
-    EXPECT_EQ(parsed("1e-900").roundedToDecimals(0, Rounding::Floor).toString(), "0");
 }
 
 TEST(DecimalTest, Comparison)
@@ -163,15 +146,8 @@ TEST(DecimalTest, Comparison)
     EXPECT_EQ(parsed("10").exponent(), 1);
 }
 
-TEST(DecimalTest, Conversions)
+TEST(DecimalTest, Exponents)
 {
-    EXPECT_EQ(parsed("-42").toInt64(), -42);
-    EXPECT_EQ(parsed("9223372036854775807").toInt64(), INT64_MAX);
-    EXPECT_FALSE(parsed("9223372036854775808").toInt64());
-    EXPECT_FALSE(parsed("1.5").toInt64());
-    EXPECT_DOUBLE_EQ(parsed("0.1").toDouble(), 0.1);
-    EXPECT_DOUBLE_EQ(parsed("-6.02e23").toDouble(), -6.02e23);
-    EXPECT_EQ(Decimal::fromDouble(0.25).toString(), "0.25");
     EXPECT_EQ(parsed("123.45").adjustedExponent(), 2);
     EXPECT_EQ(parsed("0.00456").adjustedExponent(), -3);
     EXPECT_TRUE(parsed("1e3").isInteger());

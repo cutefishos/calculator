@@ -4,9 +4,7 @@
 #include "decimal.h"
 
 #include <algorithm>
-#include <cmath>
 #include <cstdio>
-#include <cstdlib>
 
 static constexpr uint32_t kPowersOfTen[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000};
 
@@ -46,30 +44,6 @@ std::optional<Natural> Natural::fromDigits(std::string_view digits)
         end = start;
     }
     result.trim();
-    return result;
-}
-
-std::optional<Natural> Natural::fromDigits(std::string_view digits, unsigned radix)
-{
-    if (radix == 10)
-        return fromDigits(digits);
-    if (digits.empty() || radix < 2 || radix > 16)
-        return std::nullopt;
-    Natural result;
-    for (const char c : digits) {
-        unsigned digit;
-        if (c >= '0' && c <= '9')
-            digit = unsigned(c - '0');
-        else if (c >= 'a' && c <= 'f')
-            digit = unsigned(c - 'a' + 10);
-        else if (c >= 'A' && c <= 'F')
-            digit = unsigned(c - 'A' + 10);
-        else
-            return std::nullopt;
-        if (digit >= radix)
-            return std::nullopt;
-        result = result * radix + Natural(digit);
-    }
     return result;
 }
 
@@ -114,18 +88,6 @@ std::string Natural::toString() const
         text += buffer;
     }
     return text;
-}
-
-std::optional<uint64_t> Natural::toUint64() const
-{
-    if (m_limbs.size() > 3)
-        return std::nullopt;
-    unsigned __int128 value = 0;
-    for (size_t i = m_limbs.size(); i-- > 0;)
-        value = value * Base + m_limbs[i];
-    if (value > UINT64_MAX)
-        return std::nullopt;
-    return uint64_t(value);
 }
 
 std::strong_ordering Natural::operator<=>(const Natural& other) const
@@ -406,44 +368,6 @@ int64_t Decimal::adjustedExponent() const
     return m_exponent + int64_t(m_coefficient.digitCount()) - 1;
 }
 
-std::optional<int64_t> Decimal::toInt64() const
-{
-    if (!isInteger())
-        return std::nullopt;
-    if (isZero())
-        return 0;
-    if (adjustedExponent() > 18)
-        return std::nullopt;
-    const std::optional<uint64_t> magnitude = m_coefficient.shifted(unsigned(m_exponent)).toUint64();
-    if (!magnitude || *magnitude > uint64_t(INT64_MAX))
-        return std::nullopt;
-    return m_negative ? -int64_t(*magnitude) : int64_t(*magnitude);
-}
-
-double Decimal::toDouble() const
-{
-    if (isZero())
-        return 0;
-    const Decimal leading = rounded(17);
-    const double coefficient = double(*leading.m_coefficient.toUint64());
-    const int64_t exponent = leading.m_exponent;
-    double value;
-    if (exponent > 400)
-        value = HUGE_VAL;
-    else if (exponent < -400)
-        value = coefficient * std::pow(10.0, double(exponent + 100)) * 1e-100;
-    else
-        value = coefficient * std::pow(10.0, double(exponent));
-    return m_negative ? -value : value;
-}
-
-Decimal Decimal::fromDouble(double value)
-{
-    char buffer[64];
-    std::snprintf(buffer, sizeof(buffer), "%.16e", value);
-    return parse(buffer).value_or(Decimal());
-}
-
 static std::string placePoint(const std::string& digits, int64_t exponent)
 {
     if (exponent >= 0)
@@ -463,7 +387,7 @@ std::string Decimal::toString() const
 
 std::string Decimal::toFixed(int decimals) const
 {
-    return roundedToDecimals(decimals, Rounding::HalfAwayFromZero).toString();
+    return roundedToDecimals(decimals).toString();
 }
 
 Decimal Decimal::operator-() const
@@ -472,13 +396,6 @@ Decimal Decimal::operator-() const
     if (!negated.isZero())
         negated.m_negative = !negated.m_negative;
     return negated;
-}
-
-Decimal Decimal::abs() const
-{
-    Decimal magnitude = *this;
-    magnitude.m_negative = false;
-    return magnitude;
 }
 
 static std::strong_ordering compareMagnitudes(const Natural& a, int64_t aExponent, const Natural& b, int64_t bExponent)
@@ -591,13 +508,12 @@ Decimal Decimal::rounded(int digits) const
     return Decimal(std::move(quotient), m_exponent + drop, m_negative);
 }
 
-Decimal Decimal::roundedToDecimals(int64_t decimals, Rounding rounding) const
+Decimal Decimal::roundedToDecimals(int64_t decimals) const
 {
     if (isZero() || m_exponent >= -decimals)
         return *this;
     const int64_t drop = -decimals - m_exponent;
     Natural quotient;
-    bool inexact = true;
     bool upperHalf = false;
     if (drop > int64_t(m_coefficient.digitCount()) + 1) {
         // Well under half a unit.
@@ -605,25 +521,9 @@ Decimal Decimal::roundedToDecimals(int64_t decimals, Rounding rounding) const
         Natural remainder;
         const Natural unit = Natural::powerOfTen(unsigned(drop));
         Natural::divide(m_coefficient, unit, &quotient, &remainder);
-        inexact = !remainder.isZero();
         upperHalf = remainder * 2 >= unit;
     }
-
-    bool up = false;
-    switch (rounding) {
-    case Rounding::Truncate:
-        break;
-    case Rounding::Floor:
-        up = m_negative && inexact;
-        break;
-    case Rounding::Ceiling:
-        up = !m_negative && inexact;
-        break;
-    case Rounding::HalfAwayFromZero:
-        up = upperHalf;
-        break;
-    }
-    if (up)
+    if (upperHalf)
         quotient = quotient + Natural(1);
     return Decimal(std::move(quotient), -decimals, m_negative);
 }

@@ -5,14 +5,12 @@
 
 #include "evaluator.h"
 
-#include <cstddef>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
-// The calculator apart from its window: what = and C do, the history of
-// calculations, and the edits the keypad makes to the expression.
+// The calculator apart from its window: what = does, the history of
+// calculations, and what backspace does to the expression.
 class Calculator
 {
 public:
@@ -29,23 +27,10 @@ public:
     const std::vector<std::string>& history() const { return m_history; }
     void clearHistory();
 
-    Evaluator& evaluator() { return m_evaluator; }
-
     static std::string format(const Decimal& value);
 
-    // The expression and the cursor after an edit, as UTF-8 byte offsets.
-    struct Edit
-    {
-        std::string text;
-        size_t cursor = 0;
-    };
-    // The insertion replaces the selection between the two positions, in either order.
-    static Edit insert(const std::string& text, size_t anchor, size_t cursor, std::string_view insertion);
-    // Removes the selection, or the character before the cursor.
-    static Edit backspace(const std::string& text, size_t anchor, size_t cursor);
-    // What the () key types at the cursor: ")" where it closes an open
-    // parenthesis after an operand, "(" otherwise.
-    static std::string parenthesis(const std::string& text, size_t cursor);
+    // The text without its last character, however many bytes it takes.
+    static std::string backspace(const std::string& text);
 
 private:
     Evaluator m_evaluator;
