@@ -8,6 +8,8 @@
 #include "base/signal.h"
 #include "ui/window.h"
 
+#include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -16,7 +18,7 @@ class HistoryView;
 class Keypad;
 
 namespace cutefish::ui {
-class TextField;
+struct KeyEvent;
 }
 
 // The calculator's window: the history and the expression above the keypad.
@@ -39,7 +41,7 @@ public:
     // What a keypad key does to the expression; Keypad::Backspace for the glyph key.
     void press(const std::string& key);
 
-    cutefish::ui::TextField* expression() const;
+    const std::string& expression() const;
     ExpressionField* expressionField() const;
     HistoryView* history() const;
     Keypad* keypad() const;
@@ -47,11 +49,16 @@ public:
 private:
     class Root;
 
-    void edit(const Calculator::Edit& edit);
+    // A keyboard key holds its keypad key down until it is let go.
+    bool keyPress(const cutefish::ui::KeyEvent& event);
+    bool keyRelease(const cutefish::ui::KeyEvent& event);
+    void releaseKeys();
     void retranslate();
 
     Calculator m_calculator;
     cutefish::ui::Window m_window;
     Root* m_root;
+    // The keypad keys held down from the keyboard, by the keyboard key.
+    std::map<uint64_t, std::string> m_heldKeys;
     cutefish::base::Subscription m_languageChanged;
 };

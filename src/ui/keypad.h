@@ -29,7 +29,9 @@ public:
     KeypadButton(const std::string& text, Kind kind, const std::string& glyph = {});
 
     Kind kind() const { return m_kind; }
-    bool isPressed() const { return m_pressed; }
+    bool isPressed() const { return m_pressed || m_keyDown; }
+    // Shown pressed while a keyboard key holds it.
+    void setKeyDown(bool down);
 
     bool acceptsPointer() const override { return true; }
 
@@ -51,6 +53,7 @@ private:
     double m_glyphScale = 0.29;
     bool m_hovered = false;
     bool m_pressed = false;
+    bool m_keyDown = false;
 };
 
 // The standard keypad: four columns and five rows of round keys, as large as

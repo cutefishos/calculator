@@ -13,12 +13,12 @@
 #include "ui/keys.h"
 #include "ui/label.h"
 #include "ui/test_input.h"
-#include "ui/text_field.h"
 #include "ui/theme.h"
 
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <tuple>
 
 using namespace cutefish::ui;
 
@@ -56,7 +56,7 @@ struct Fixture
         layout();
     }
 
-    std::string text() const { return window.expression()->text(); }
+    std::string text() const { return window.expression(); }
 
     CalculatorWindow window;
 };
@@ -189,24 +189,93 @@ TEST(UiTest, DoubleZeroKey)
     EXPECT_EQ(fixture.text(), "299");
 }
 
-TEST(UiTest, KeysKeepTheFocusAndTheCursor)
+static KeyEvent keyEvent(uint32_t keysym, uint32_t keycode, const std::string& text = {})
+{
+    KeyEvent event;
+    event.key = keysym;
+    event.keycode = keycode;
+    event.text = text;
+    return event;
+}
+
+TEST(UiTest, KeyboardHoldsTheKeypadKey)
 {
     Fixture fixture;
-    TextField* field = fixture.window.expression();
-    EXPECT_TRUE(field->hasFocus());
+    Window& window = fixture.window.window();
+    TestInput::setKeyboardFocus(window, true);
+    Keypad* keypad = fixture.window.keypad();
+
+    // Down on the press, up on the release; the key counts once, on the press.
+    const KeyEvent seven = keyEvent('7', 16, "7");
+    TestInput::pressKey(window, seven);
+    fixture.layout();
+    EXPECT_TRUE(keypad->button("7")->isPressed());
+    EXPECT_EQ(fixture.text(), "7");
+    KeyEvent sevenAgain = seven;
+    sevenAgain.repeat = true;
+    TestInput::pressKey(window, sevenAgain);
+    EXPECT_EQ(fixture.text(), "7");
+    TestInput::releaseKey(window, keyEvent('7', 16));
+    fixture.layout();
+    EXPECT_FALSE(keypad->button("7")->isPressed());
+    EXPECT_EQ(fixture.text(), "7");
+
+    // * and / stand for the signs; Return for =.
+    for (const auto& [keysym, keycode, text] : {std::tuple{uint32_t('*'), 55u, "*"}, std::tuple{uint32_t('6'), 15u, "6"}}) {
+        TestInput::pressKey(window, keyEvent(keysym, keycode, text));
+        TestInput::releaseKey(window, keyEvent(keysym, keycode));
+    }
+    EXPECT_EQ(fixture.text(), "7×6");
+    TestInput::pressKey(window, keyEvent(key::Return, 28, "\r"));
+    fixture.layout();
+    EXPECT_TRUE(keypad->button("=")->isPressed());
+    EXPECT_EQ(fixture.text(), "42");
+    TestInput::releaseKey(window, keyEvent(key::Return, 28));
+    EXPECT_FALSE(keypad->button("=")->isPressed());
+
+    // A held backspace repeats and stays down.
+    TestInput::pressKey(window, keyEvent(key::BackSpace, 14));
+    KeyEvent repeat = keyEvent(key::BackSpace, 14);
+    repeat.repeat = true;
+    TestInput::pressKey(window, repeat);
+    EXPECT_TRUE(keypad->button(Keypad::Backspace)->isPressed());
+    EXPECT_EQ(fixture.text(), "");
+    TestInput::releaseKey(window, keyEvent(key::BackSpace, 14));
+    EXPECT_FALSE(keypad->button(Keypad::Backspace)->isPressed());
+
+    // Escape clears; shortcuts and other text change nothing.
+    TestInput::pressKey(window, keyEvent('5', 6, "5"));
+    TestInput::releaseKey(window, keyEvent('5', 6));
+    KeyEvent shortcut = keyEvent('1', 2, "1");
+    shortcut.modifiers = ControlModifier;
+    TestInput::pressKey(window, shortcut);
+    TestInput::releaseKey(window, shortcut);
+    TestInput::typeText(window, "a(");
+    EXPECT_EQ(fixture.text(), "5");
+    EXPECT_FALSE(keypad->button("1")->isPressed());
+    TestInput::pressKey(window, keyEvent(key::Escape, 1));
+    TestInput::releaseKey(window, keyEvent(key::Escape, 1));
+    EXPECT_EQ(fixture.text(), "");
+
+    // A key still down when the window is deactivated comes up.
+    const int width = int(window.size().width);
+    const int height = int(window.size().height);
+    TestInput::configure(window, width, height, {.activated = true});
+    TestInput::pressKey(window, keyEvent('8', 9, "8"));
+    EXPECT_TRUE(keypad->button("8")->isPressed());
+    TestInput::configure(window, width, height, {.activated = false});
+    fixture.layout();
+    EXPECT_FALSE(keypad->button("8")->isPressed());
+}
+
+TEST(UiTest, KeypadClicksKeepTheKeyboard)
+{
+    Fixture fixture;
+    Window& window = fixture.window.window();
+    TestInput::setKeyboardFocus(window, true);
     fixture.click("1");
-    fixture.click("3");
-    field->setCursorPosition(1);
-    fixture.click("2");
-    EXPECT_EQ(fixture.text(), "123");
-    EXPECT_EQ(field->cursorPosition(), 2u);
-    EXPECT_TRUE(field->hasFocus());
-    field->select(0, 2);
-    fixture.click("9");
-    EXPECT_EQ(fixture.text(), "93");
-    field->select(2, 1);
-    fixture.click(Keypad::Backspace);
-    EXPECT_EQ(fixture.text(), "9");
+    TestInput::typeText(window, "2");
+    EXPECT_EQ(fixture.text(), "12");
 }
 
 TEST(UiTest, Typing)
@@ -214,14 +283,14 @@ TEST(UiTest, Typing)
     Fixture fixture;
     Window& window = fixture.window.window();
     TestInput::setKeyboardFocus(window, true);
-    TestInput::typeText(window, "2^10");
+    TestInput::typeText(window, "12*3+4");
     TestInput::typeKey(window, key::Return);
     fixture.layout();
-    EXPECT_EQ(fixture.text(), "1024");
+    EXPECT_EQ(fixture.text(), "40");
     TestInput::typeText(window, "/4");
     TestInput::typeKey(window, key::KeypadEnter);
     fixture.layout();
-    EXPECT_EQ(fixture.text(), "256");
+    EXPECT_EQ(fixture.text(), "10");
     EXPECT_EQ(fixture.window.history()->count(), 2u);
 }
 
@@ -230,29 +299,34 @@ TEST(UiTest, ExpressionStaysOnTheRightEdge)
     for (const double scale : {1.0, 1.5, 1.75}) {
         Fixture fixture(scale);
         const RectF row = windowRect(fixture.window.expressionField());
-        TextField* field = fixture.window.expression();
-        EXPECT_EQ(windowRect(field), row);
+        View* label = fixture.window.expressionField()->label();
+        const double end = row.right() - Theme::current().largeSpacing;
 
-        // The text grows to the left: each key goes in front, so the last glyph
-        // stays a 1 and its right edge on the same device pixel.
-        fixture.click("1");
-        const Rect first = TestInput::inkRect(*field, scale);
-        for (const char* key : {"2", "3", "+", "4", "5", "×", "6"}) {
-            field->setCursorPosition(0);
+        // The text grows to the left; its end stays where it is.
+        for (const char* key : {"1", "2", "3", "+", "4", "5", "×", "6"}) {
             fixture.click(key);
-            const Rect ink = TestInput::inkRect(*field, scale);
-            EXPECT_EQ(ink.x + ink.width, first.x + first.width) << scale << " " << fixture.text();
-            EXPECT_LT(ink.x, first.x) << scale << " " << fixture.text();
+            EXPECT_DOUBLE_EQ(windowRect(label).right(), end) << scale << " " << fixture.text();
+            const Rect ink = TestInput::inkRect(*label, scale);
+            EXPECT_NEAR((ink.x + ink.width) / scale, label->geometry().width, 2) << scale << " " << fixture.text();
         }
-        EXPECT_NEAR((first.x + first.width) / scale, row.width - Theme::current().largeSpacing, 3) << scale;
 
-        // A press in the empty part puts the cursor at the start.
-        fixture.click("AC");
-        fixture.click("5");
-        TestInput::click(fixture.window.window(), {row.x + 20, row.y + row.height / 2});
-        fixture.layout();
-        EXPECT_EQ(field->cursorPosition(), 0u);
-        EXPECT_TRUE(field->hasFocus());
+        // A long expression slides out at the left margin, its end in sight.
+        for (int i = 0; i < 40; ++i)
+            fixture.click("7");
+        EXPECT_DOUBLE_EQ(windowRect(label).right(), end);
+        EXPECT_LT(windowRect(label).x, row.x);
+        const Image frame = fixture.window.window().grab();
+        const double margin = Theme::current().largeSpacing;
+        const auto inked = [&](double x) {
+            for (int y = int(row.y * scale); y < int(row.bottom() * scale); ++y) {
+                if (frame.pixel(int(x * scale), y) != frame.pixel(1, y))
+                    return true;
+            }
+            return false;
+        };
+        for (double x = row.x + 1; x < row.x + margin - 1; x += 1 / scale)
+            EXPECT_FALSE(inked(x)) << scale << " " << x;
+        EXPECT_TRUE(inked(row.x + margin + 2)) << scale;
     }
 }
 

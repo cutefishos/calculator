@@ -10,7 +10,7 @@
 
 #include "base/i18n.h"
 #include "ui/application.h"
-#include "ui/text_field.h"
+#include "ui/keys.h"
 #include "ui/theme.h"
 #include "ui/window_header.h"
 
@@ -19,6 +19,37 @@
 
 using namespace cutefish::ui;
 using cutefish::i18n::tr;
+
+// The keypad key a keyboard key stands for; empty for none.
+static std::string keypadKey(const KeyEvent& event)
+{
+    if (event.modifiers & (ControlModifier | AltModifier | SuperModifier))
+        return {};
+    switch (event.key) {
+    case key::Return:
+    case key::KeypadEnter:
+        return "=";
+    case key::BackSpace:
+        return Keypad::Backspace;
+    case key::Escape:
+    case key::Delete:
+        return "AC";
+    default:
+        break;
+    }
+    const std::string& text = event.text;
+    if (text.size() == 1 && text[0] >= '0' && text[0] <= '9')
+        return text;
+    if (text == "." || text == ",")
+        return ".";
+    if (text == "*" || text == "x" || text == "X")
+        return "×";
+    if (text == "/")
+        return "÷";
+    if (text == "+" || text == "-" || text == "%" || text == "=")
+        return text;
+    return {};
+}
 
 class CalculatorWindow::Root : public View
 {
@@ -33,6 +64,10 @@ public:
     }
 
     bool acceptsPointer() const override { return false; }
+    bool acceptsFocus() const override { return true; }
+
+    std::function<bool(const KeyEvent&)> onKeyPress;
+    std::function<bool(const KeyEvent&)> onKeyRelease;
 
     WindowHeader* header;
     HistoryView* history;
@@ -40,6 +75,9 @@ public:
     Keypad* keypad;
 
 protected:
+    bool keyPress(const KeyEvent& event) override { return onKeyPress && onKeyPress(event); }
+    bool keyRelease(const KeyEvent& event) override { return onKeyRelease && onKeyRelease(event); }
+
     void layout() override
     {
         const double width = geometry().width;
@@ -75,9 +113,14 @@ CalculatorWindow::CalculatorWindow()
     m_window.setContentView(std::move(root));
 
     m_root->keypad->onPressed = [this](const std::string& key) { press(key); };
-    TextField* field = expression();
-    field->onAccepted = [this] { press("="); };
-    field->setFocus();
+    m_root->onKeyPress = [this](const KeyEvent& event) { return keyPress(event); };
+    m_root->onKeyRelease = [this](const KeyEvent& event) { return keyRelease(event); };
+    // A key let go in another window never comes back as a release here.
+    m_window.onActiveChanged = [this] {
+        if (!m_window.isActive())
+            releaseKeys();
+    };
+    m_root->setFocus();
 
     retranslate();
     m_languageChanged = Application::instance()->languageChanged.connect([this] { retranslate(); });
@@ -85,9 +128,9 @@ CalculatorWindow::CalculatorWindow()
 
 CalculatorWindow::~CalculatorWindow() = default;
 
-TextField* CalculatorWindow::expression() const
+const std::string& CalculatorWindow::expression() const
 {
-    return m_root->expression->textField();
+    return m_root->expression->text();
 }
 
 ExpressionField* CalculatorWindow::expressionField() const
@@ -107,16 +150,8 @@ Keypad* CalculatorWindow::keypad() const
 
 void CalculatorWindow::press(const std::string& key)
 {
-    TextField* field = expression();
-    const std::string& text = field->text();
-    const size_t cursor = field->cursorPosition();
-    // The other end of the selection: the selected text lies on one side of the cursor.
-    size_t anchor = cursor;
-    if (field->hasSelection()) {
-        const std::string selected = field->selectedText();
-        anchor = text.compare(cursor, selected.size(), selected) == 0 ? cursor + selected.size() : cursor - selected.size();
-    }
-
+    ExpressionField* field = m_root->expression;
+    const std::string text = field->text();
     if (key == "=") {
         if (const std::optional<std::string> result = m_calculator.calculate(text)) {
             field->setText(*result);
@@ -124,24 +159,69 @@ void CalculatorWindow::press(const std::string& key)
         }
     } else if (key == "AC") {
         if (!text.empty()) {
-            field->clear();
+            field->setText({});
         } else {
             m_calculator.clearHistory();
             m_root->history->setEntries(m_calculator.history());
         }
     } else if (key == Keypad::Backspace) {
-        edit(Calculator::backspace(text, anchor, cursor));
+        field->setText(Calculator::backspace(text, text.size(), text.size()).text);
     } else {
-        edit(Calculator::insert(text, anchor, cursor, key));
+        field->setText(Calculator::insert(text, text.size(), text.size(), key).text);
     }
-    field->setFocus();
+    // A click on the keypad keeps the keyboard here.
+    m_root->setFocus();
 }
 
-void CalculatorWindow::edit(const Calculator::Edit& edit)
+// The physical key when known, so the release finds the press under any layout or modifier.
+static uint64_t heldKeyId(const KeyEvent& event)
 {
-    TextField* field = expression();
-    field->setText(edit.text);
-    field->setCursorPosition(edit.cursor);
+    return event.keycode ? event.keycode : (uint64_t(1) << 32) | event.key;
+}
+
+bool CalculatorWindow::keyPress(const KeyEvent& event)
+{
+    const uint64_t id = heldKeyId(event);
+    if (event.repeat) {
+        // Only a held backspace repeats; the other keys count once.
+        const auto held = m_heldKeys.find(id);
+        if (held == m_heldKeys.end())
+            return false;
+        if (held->second == Keypad::Backspace)
+            press(held->second);
+        return true;
+    }
+    const std::string key = keypadKey(event);
+    KeypadButton* button = key.empty() ? nullptr : m_root->keypad->button(key);
+    if (!button)
+        return false;
+    m_heldKeys[id] = key;
+    button->setKeyDown(true);
+    press(key);
+    return true;
+}
+
+bool CalculatorWindow::keyRelease(const KeyEvent& event)
+{
+    const auto held = m_heldKeys.find(heldKeyId(event));
+    if (held == m_heldKeys.end())
+        return false;
+    const std::string key = held->second;
+    m_heldKeys.erase(held);
+    // Another keyboard key may still hold the same button, as Return and the keypad's Enter do.
+    for (const auto& [id, other] : m_heldKeys) {
+        if (other == key)
+            return true;
+    }
+    m_root->keypad->button(key)->setKeyDown(false);
+    return true;
+}
+
+void CalculatorWindow::releaseKeys()
+{
+    for (const auto& [id, key] : m_heldKeys)
+        m_root->keypad->button(key)->setKeyDown(false);
+    m_heldKeys.clear();
 }
 
 void CalculatorWindow::retranslate()

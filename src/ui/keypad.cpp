@@ -104,17 +104,17 @@ void KeypadButton::paint(Painter& painter)
     CalculatorColor rim;
     switch (m_kind) {
     case Kind::Digit:
-        base = m_pressed ? CalculatorColor::KeyPressed : m_hovered ? CalculatorColor::KeyHovered : CalculatorColor::Key;
+        base = isPressed() ? CalculatorColor::KeyPressed : m_hovered ? CalculatorColor::KeyHovered : CalculatorColor::Key;
         rim = CalculatorColor::KeyRim;
         break;
     case Kind::Operator:
-        base = m_pressed ? CalculatorColor::OperatorKeyPressed
+        base = isPressed() ? CalculatorColor::OperatorKeyPressed
                : m_hovered ? CalculatorColor::OperatorKeyHovered
                            : CalculatorColor::OperatorKey;
         rim = CalculatorColor::OperatorKeyRim;
         break;
     case Kind::Accent:
-        base = m_pressed ? CalculatorColor::AccentKeyPressed
+        base = isPressed() ? CalculatorColor::AccentKeyPressed
                : m_hovered ? CalculatorColor::AccentKeyHovered
                            : CalculatorColor::AccentKey;
         rim = CalculatorColor::AccentKeyRim;
@@ -137,6 +137,14 @@ void KeypadButton::paint(Painter& painter)
     painter.fillRoundedRect(plate, plate.width / 2, gradient);
     const double inset = std::max(1.0, std::round(plate.width * kRimWidth * scale)) / scale;
     painter.fillEllipse(plate.adjusted(inset, inset, -inset, -inset), fill);
+}
+
+void KeypadButton::setKeyDown(bool down)
+{
+    if (down == m_keyDown)
+        return;
+    m_keyDown = down;
+    requestPaint();
 }
 
 void KeypadButton::pointerEnter()
