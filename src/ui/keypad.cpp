@@ -36,7 +36,7 @@ struct KeyInfo
 } // namespace
 
 static const KeyInfo kKeys[] = {
-    {"AC", "AC", nullptr, KeypadButton::Kind::Operator},
+    {Keypad::Clear, "AC", nullptr, KeypadButton::Kind::Operator},
     {"%", "%", nullptr, KeypadButton::Kind::Operator},
     {Keypad::Backspace, nullptr, "backspace", KeypadButton::Kind::Operator},
     {"÷", nullptr, "divide", KeypadButton::Kind::Operator},
@@ -145,6 +145,12 @@ void KeypadButton::setKeyDown(bool down)
         return;
     m_keyDown = down;
     requestPaint();
+}
+
+void KeypadButton::setText(const std::string& text)
+{
+    if (m_label)
+        m_label->setText(text);
 }
 
 void KeypadButton::pointerEnter()

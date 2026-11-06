@@ -135,11 +135,19 @@ TEST(UiTest, LabelsCentredOnKeys)
             ASSERT_GT(ink.width, 0) << button->name();
             const std::string& name = button->name();
             // The font draws a 1 and AC left of the middle of their advance.
-            if (name != "key 1" && name != "key AC")
+            if (name != "key 1" && name != "key CLEAR")
                 EXPECT_NEAR((ink.x + ink.width / 2.0) / scale, rect.width / 2, 1 / scale) << name;
             if (name.size() == 5 && name[4] >= '0' && name[4] <= '9')
                 EXPECT_NEAR((ink.y + ink.height / 2.0) / scale, rect.height / 2, 1) << name;
         }
+
+        // C, once there is an expression to clear: centred both ways, as a capital.
+        fixture.click("1");
+        View* clear = fixture.window.keypad()->button(Keypad::Clear)->children().front().get();
+        const Rect ink = TestInput::inkRect(*clear, scale);
+        const RectF rect = clear->geometry();
+        EXPECT_NEAR((ink.x + ink.width / 2.0) / scale, rect.width / 2, 1 / scale) << scale;
+        EXPECT_NEAR((ink.y + ink.height / 2.0) / scale, rect.height / 2, 1) << scale;
     }
 }
 
@@ -166,12 +174,22 @@ TEST(UiTest, KeypadCalculates)
     fixture.click(Keypad::Backspace);
     EXPECT_EQ(fixture.text(), "52.6");
 
-    // C empties the expression, then the history.
-    fixture.click("AC");
+    // C empties the expression and turns into AC, which empties the history.
+    const auto clearLabel = [&] {
+        return static_cast<Label*>(fixture.window.keypad()->button(Keypad::Clear)->children().front().get())->text();
+    };
+    EXPECT_EQ(clearLabel(), "C");
+    fixture.click(Keypad::Clear);
     EXPECT_EQ(fixture.text(), "");
     EXPECT_EQ(fixture.window.history()->count(), 2u);
-    fixture.click("AC");
+    EXPECT_EQ(clearLabel(), "AC");
+    fixture.click(Keypad::Clear);
     EXPECT_EQ(fixture.window.history()->count(), 0u);
+    EXPECT_EQ(clearLabel(), "AC");
+    fixture.click("4");
+    EXPECT_EQ(clearLabel(), "C");
+    fixture.click(Keypad::Backspace);
+    EXPECT_EQ(clearLabel(), "AC");
 
     // An expression with no result stays as it is.
     for (const char* key : {"1", "÷", "0", "="})
@@ -338,7 +356,7 @@ TEST(UiTest, HistoryScrollsToTheLatest)
         fixture.click("+");
         fixture.click("1");
         fixture.click("=");
-        fixture.click("AC");
+        fixture.click(Keypad::Clear);
     }
     HistoryView* history = fixture.window.history();
     EXPECT_EQ(history->count(), 12u);
@@ -379,7 +397,7 @@ TEST(UiTest, HistoryShowsTwoWholeRows)
         fixture.click("+");
         fixture.click("1");
         fixture.click("=");
-        fixture.click("AC");
+        fixture.click(Keypad::Clear);
     }
     HistoryView* history = fixture.window.history();
     const RectF area = windowRect(history);
@@ -404,7 +422,7 @@ TEST(UiTest, LayoutIsStable)
     TestInput::setVerifiesLayout(true);
     {
         Fixture fixture(1.25);
-        for (const char* key : {"1", "+", "2", "=", "AC"})
+        for (const char* key : {"1", "+", "2", "=", Keypad::Clear})
             fixture.click(key);
     }
     EXPECT_EQ(TestInput::layoutMismatches(), 0);

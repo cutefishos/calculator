@@ -32,6 +32,7 @@ public:
     bool isPressed() const { return m_pressed || m_keyDown; }
     // Shown pressed while a keyboard key holds it.
     void setKeyDown(bool down);
+    void setText(const std::string& text);
 
     bool acceptsPointer() const override { return true; }
 
@@ -62,7 +63,8 @@ class Keypad : public cutefish::ui::View
 {
 public:
     // What the keys send: the digits and operators as they read ("-" for the
-    // minus sign), "AC", and "BACKSPACE" for the backspace key.
+    // minus sign), "CLEAR" for C/AC and "BACKSPACE" for the backspace key.
+    static constexpr const char* Clear = "CLEAR";
     static constexpr const char* Backspace = "BACKSPACE";
 
     Keypad();

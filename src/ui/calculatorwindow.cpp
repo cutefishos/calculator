@@ -33,7 +33,7 @@ static std::string keypadKey(const KeyEvent& event)
         return Keypad::Backspace;
     case key::Escape:
     case key::Delete:
-        return "AC";
+        return Keypad::Clear;
     default:
         break;
     }
@@ -157,7 +157,7 @@ void CalculatorWindow::press(const std::string& key)
             field->setText(*result);
             m_root->history->setEntries(m_calculator.history());
         }
-    } else if (key == "AC") {
+    } else if (key == Keypad::Clear) {
         if (!text.empty()) {
             field->setText({});
         } else {
@@ -169,6 +169,8 @@ void CalculatorWindow::press(const std::string& key)
     } else {
         field->setText(text + key);
     }
+    // C clears the expression; AC, on an empty one, the history.
+    m_root->keypad->button(Keypad::Clear)->setText(field->text().empty() ? "AC" : "C");
     // A click on the keypad keeps the keyboard here.
     m_root->setFocus();
 }
