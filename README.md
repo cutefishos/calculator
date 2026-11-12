@@ -4,7 +4,7 @@ A simple calculator for Cutefish Desktop, and nothing more: + − × ÷ and
 percentages on a keypad you can also drive from the keyboard, with the last
 calculations above the one you are typing.
 
-<img src="screenshots/calculator.png" alt="Calculator" width="289">
+<img src="screenshots/calculator.png" alt="Calculator" width="371">
 
 ## Dependencies
 
