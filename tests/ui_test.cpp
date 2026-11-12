@@ -580,6 +580,12 @@ int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
     Application application(argc, argv, Application::Platform::Headless);
+
+    // The ink checks depend on the face; the machine's own sans-serif varies.
+    Theme theme = Theme::current();
+    theme.fontFamily = "Inter";
+    Theme::setCurrent(theme);
+
     for (const auto& [name, svg] : embeddedIcons())
         Icon::registerGlyph(std::string(name), std::string(svg));
     return RUN_ALL_TESTS();
