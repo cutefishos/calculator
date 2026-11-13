@@ -1,0 +1,65 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: cutefish-calculator\n"
+"Report-Msgid-Bugs-To: https://github.com/cutefishos\n"
+"POT-Creation-Date: 2026-11-06 21:53+0800\n"
+"PO-Revision-Date: 2026-11-06 21:53+0800\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: src/ui/calculatorwindow.cpp cutefish-calculator.desktop
+msgid "Calculator"
+msgstr "计算器"
+
+#: src/ui/calculatorwindow.cpp
+msgid "About Calculator"
+msgstr "关于计算器"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Hide Calculator"
+msgstr "隐藏计算器"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Quit Calculator"
+msgstr "退出计算器"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Edit"
+msgstr "编辑"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Copy"
+msgstr "复制"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Paste"
+msgstr "粘贴"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Clear History"
+msgstr "清除历史记录"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Window"
+msgstr "窗口"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Minimize"
+msgstr "最小化"
+
+#: src/ui/calculatorwindow.cpp
+msgid "A simple calculator"
+msgstr "一款简单的计算器"
+
+#: cutefish-calculator.desktop
+msgid "Perform calculations"
+msgstr "进行计算"
+
+#: cutefish-calculator.desktop
+msgid "Math;Arithmetic;"
+msgstr "Math;Arithmetic;数学;算术;计算;"

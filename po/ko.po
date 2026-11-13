@@ -1,0 +1,65 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: cutefish-calculator\n"
+"Report-Msgid-Bugs-To: https://github.com/cutefishos\n"
+"POT-Creation-Date: 2026-11-06 21:53+0800\n"
+"PO-Revision-Date: 2026-11-06 21:53+0800\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: src/ui/calculatorwindow.cpp cutefish-calculator.desktop
+msgid "Calculator"
+msgstr "계산기"
+
+#: src/ui/calculatorwindow.cpp
+msgid "About Calculator"
+msgstr "계산기 정보"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Hide Calculator"
+msgstr "계산기 숨기기"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Quit Calculator"
+msgstr "계산기 종료"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Edit"
+msgstr "편집"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Copy"
+msgstr "복사"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Paste"
+msgstr "붙여넣기"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Clear History"
+msgstr "기록 지우기"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Window"
+msgstr "창"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Minimize"
+msgstr "최소화"
+
+#: src/ui/calculatorwindow.cpp
+msgid "A simple calculator"
+msgstr "간단한 계산기"
+
+#: cutefish-calculator.desktop
+msgid "Perform calculations"
+msgstr "계산을 수행합니다"
+
+#: cutefish-calculator.desktop
+msgid "Math;Arithmetic;"
+msgstr "수학;산수;계산;Math;Arithmetic;"
