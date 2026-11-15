@@ -1,0 +1,64 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: cutefish-calculator\n"
+"Report-Msgid-Bugs-To: https://github.com/cutefishos\n"
+"POT-Creation-Date: 2026-11-06 21:53+0800\n"
+"PO-Revision-Date: 2026-11-06 21:53+0800\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/ui/calculatorwindow.cpp cutefish-calculator.desktop
+msgid "Calculator"
+msgstr "Kalkulator"
+
+#: src/ui/calculatorwindow.cpp
+msgid "About Calculator"
+msgstr "Tentang Kalkulator"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Hide Calculator"
+msgstr "Sembunyikan Kalkulator"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Quit Calculator"
+msgstr "Keluar dari Kalkulator"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Edit"
+msgstr "Edit"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Copy"
+msgstr "Salin"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Paste"
+msgstr "Tempel"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Clear History"
+msgstr "Hapus Riwayat"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Window"
+msgstr "Jendela"
+
+#: src/ui/calculatorwindow.cpp
+msgid "Minimize"
+msgstr "Minimalkan"
+
+#: src/ui/calculatorwindow.cpp
+msgid "A simple calculator"
+msgstr "Kalkulator sederhana"
+
+#: cutefish-calculator.desktop
+msgid "Perform calculations"
+msgstr "Melakukan perhitungan"
+
+#: cutefish-calculator.desktop
+msgid "Math;Arithmetic;"
+msgstr "Math;Arithmetic;Matematika;Aritmetika;Hitung;"
