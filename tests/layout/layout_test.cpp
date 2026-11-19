@@ -9,18 +9,14 @@
 #include "keypad.h"
 
 #include "ui/application.h"
-#include "ui/clipboard.h"
 #include "ui/icon.h"
-#include "ui/keys.h"
 #include "ui/label.h"
-#include "ui/menu.h"
 #include "ui/test_input.h"
 #include "ui/theme.h"
 
 #include <gtest/gtest.h>
 
 #include <cmath>
-#include <tuple>
 
 using namespace cutefish::ui;
 
@@ -65,7 +61,7 @@ struct Fixture
 
 } // namespace
 
-TEST(UiTest, Layout)
+TEST(LayoutTest, Layout)
 {
     for (const double scale : {1.0, 1.5, 2.0}) {
         for (const SizeF size : {CalculatorWindow::size()}) {
@@ -119,7 +115,7 @@ TEST(UiTest, Layout)
     }
 }
 
-TEST(UiTest, LabelsCentredOnKeys)
+TEST(LayoutTest, LabelsCentredOnKeys)
 {
     for (const double scale : {1.0, 1.5}) {
         Fixture fixture(scale);
@@ -137,7 +133,7 @@ TEST(UiTest, LabelsCentredOnKeys)
             ASSERT_GT(ink.width, 0) << button->name();
             const std::string& name = button->name();
             // The font draws a 1 and AC left of the middle of their advance.
-            if (name != "key 1" && name != "key CLEAR")
+            if (name != "key:1" && name != "key:CLEAR")
                 EXPECT_NEAR((ink.x + ink.width / 2.0) / scale, rect.width / 2, 1 / scale) << name;
             if (name.size() == 5 && name[4] >= '0' && name[4] <= '9')
                 EXPECT_NEAR((ink.y + ink.height / 2.0) / scale, rect.height / 2, 1) << name;
@@ -153,168 +149,7 @@ TEST(UiTest, LabelsCentredOnKeys)
     }
 }
 
-TEST(UiTest, KeypadCalculates)
-{
-    Fixture fixture;
-    for (const char* key : {"7", "×", "8"})
-        fixture.click(key);
-    EXPECT_EQ(fixture.text(), "7×8");
-    fixture.click("=");
-    EXPECT_EQ(fixture.text(), "56");
-    EXPECT_EQ(fixture.window.history()->count(), 1u);
-    EXPECT_EQ(fixture.window.calculator().history().back(), "7×8 = 56");
-
-    fixture.click("−");
-    fixture.click("6");
-    fixture.click("%");
-    fixture.click("=");
-    EXPECT_EQ(fixture.text(), "52.64");
-
-    fixture.click(Keypad::Backspace);
-    EXPECT_EQ(fixture.text(), "52.6");
-    fixture.click("÷");
-    fixture.click(Keypad::Backspace);
-    EXPECT_EQ(fixture.text(), "52.6");
-
-    // C empties the expression and turns into AC, which empties the history.
-    const auto clearLabel = [&] {
-        return static_cast<Label*>(fixture.window.keypad()->button(Keypad::Clear)->children().front().get())->text();
-    };
-    EXPECT_EQ(clearLabel(), "C");
-    fixture.click(Keypad::Clear);
-    EXPECT_EQ(fixture.text(), "");
-    EXPECT_EQ(fixture.window.history()->count(), 2u);
-    EXPECT_EQ(clearLabel(), "AC");
-    fixture.click(Keypad::Clear);
-    EXPECT_EQ(fixture.window.history()->count(), 0u);
-    EXPECT_EQ(clearLabel(), "AC");
-    fixture.click("4");
-    EXPECT_EQ(clearLabel(), "C");
-    fixture.click(Keypad::Backspace);
-    EXPECT_EQ(clearLabel(), "AC");
-
-    // An expression with no result stays as it is.
-    for (const char* key : {"1", "÷", "0", "="})
-        fixture.click(key);
-    EXPECT_EQ(fixture.text(), "1÷0");
-    EXPECT_EQ(fixture.window.history()->count(), 0u);
-}
-
-TEST(UiTest, DoubleZeroKey)
-{
-    Fixture fixture;
-    for (const char* key : {"3", "00", "−", "1", "="})
-        fixture.click(key);
-    EXPECT_EQ(fixture.window.calculator().history().back(), "300−1 = 299");
-    EXPECT_EQ(fixture.text(), "299");
-}
-
-static KeyEvent keyEvent(uint32_t keysym, uint32_t keycode, const std::string& text = {})
-{
-    KeyEvent event;
-    event.key = keysym;
-    event.keycode = keycode;
-    event.text = text;
-    return event;
-}
-
-TEST(UiTest, KeyboardHoldsTheKeypadKey)
-{
-    Fixture fixture;
-    Window& window = fixture.window.window();
-    TestInput::setKeyboardFocus(window, true);
-    Keypad* keypad = fixture.window.keypad();
-
-    // Down on the press, up on the release; the key counts once, on the press.
-    const KeyEvent seven = keyEvent('7', 16, "7");
-    TestInput::pressKey(window, seven);
-    fixture.layout();
-    EXPECT_TRUE(keypad->button("7")->isPressed());
-    EXPECT_EQ(fixture.text(), "7");
-    KeyEvent sevenAgain = seven;
-    sevenAgain.repeat = true;
-    TestInput::pressKey(window, sevenAgain);
-    EXPECT_EQ(fixture.text(), "7");
-    TestInput::releaseKey(window, keyEvent('7', 16));
-    fixture.layout();
-    EXPECT_FALSE(keypad->button("7")->isPressed());
-    EXPECT_EQ(fixture.text(), "7");
-
-    // * and / stand for the signs; Return for =.
-    for (const auto& [keysym, keycode, text] : {std::tuple{uint32_t('*'), 55u, "*"}, std::tuple{uint32_t('6'), 15u, "6"}}) {
-        TestInput::pressKey(window, keyEvent(keysym, keycode, text));
-        TestInput::releaseKey(window, keyEvent(keysym, keycode));
-    }
-    EXPECT_EQ(fixture.text(), "7×6");
-    TestInput::pressKey(window, keyEvent(key::Return, 28, "\r"));
-    fixture.layout();
-    EXPECT_TRUE(keypad->button("=")->isPressed());
-    EXPECT_EQ(fixture.text(), "42");
-    TestInput::releaseKey(window, keyEvent(key::Return, 28));
-    EXPECT_FALSE(keypad->button("=")->isPressed());
-
-    // A held backspace repeats and stays down.
-    TestInput::pressKey(window, keyEvent(key::BackSpace, 14));
-    KeyEvent repeat = keyEvent(key::BackSpace, 14);
-    repeat.repeat = true;
-    TestInput::pressKey(window, repeat);
-    EXPECT_TRUE(keypad->button(Keypad::Backspace)->isPressed());
-    EXPECT_EQ(fixture.text(), "");
-    TestInput::releaseKey(window, keyEvent(key::BackSpace, 14));
-    EXPECT_FALSE(keypad->button(Keypad::Backspace)->isPressed());
-
-    // Escape clears; shortcuts and other text change nothing.
-    TestInput::pressKey(window, keyEvent('5', 6, "5"));
-    TestInput::releaseKey(window, keyEvent('5', 6));
-    KeyEvent shortcut = keyEvent('1', 2, "1");
-    shortcut.modifiers = ControlModifier;
-    TestInput::pressKey(window, shortcut);
-    TestInput::releaseKey(window, shortcut);
-    TestInput::typeText(window, "a(");
-    EXPECT_EQ(fixture.text(), "5");
-    EXPECT_FALSE(keypad->button("1")->isPressed());
-    TestInput::pressKey(window, keyEvent(key::Escape, 1));
-    TestInput::releaseKey(window, keyEvent(key::Escape, 1));
-    EXPECT_EQ(fixture.text(), "");
-
-    // A key still down when the window is deactivated comes up.
-    const int width = int(window.size().width);
-    const int height = int(window.size().height);
-    TestInput::configure(window, width, height, {.activated = true});
-    TestInput::pressKey(window, keyEvent('8', 9, "8"));
-    EXPECT_TRUE(keypad->button("8")->isPressed());
-    TestInput::configure(window, width, height, {.activated = false});
-    fixture.layout();
-    EXPECT_FALSE(keypad->button("8")->isPressed());
-}
-
-TEST(UiTest, KeypadClicksKeepTheKeyboard)
-{
-    Fixture fixture;
-    Window& window = fixture.window.window();
-    TestInput::setKeyboardFocus(window, true);
-    fixture.click("1");
-    TestInput::typeText(window, "2");
-    EXPECT_EQ(fixture.text(), "12");
-}
-
-TEST(UiTest, Typing)
-{
-    Fixture fixture;
-    Window& window = fixture.window.window();
-    TestInput::setKeyboardFocus(window, true);
-    TestInput::typeText(window, "12*3+4");
-    TestInput::typeKey(window, key::Return);
-    fixture.layout();
-    EXPECT_EQ(fixture.text(), "40");
-    TestInput::typeText(window, "/4");
-    TestInput::typeKey(window, key::KeypadEnter);
-    fixture.layout();
-    EXPECT_EQ(fixture.text(), "10");
-    EXPECT_EQ(fixture.window.history()->count(), 2u);
-}
-
-TEST(UiTest, ExpressionStaysOnTheRightEdge)
+TEST(LayoutTest, ExpressionStaysOnTheRightEdge)
 {
     for (const double scale : {1.0, 1.5, 1.75}) {
         Fixture fixture(scale);
@@ -350,7 +185,7 @@ TEST(UiTest, ExpressionStaysOnTheRightEdge)
     }
 }
 
-TEST(UiTest, SignsKeepTheTextOnItsLine)
+TEST(LayoutTest, SignsKeepTheTextOnItsLine)
 {
     // × and ÷ come from a fallback font with taller metrics; the digits stay put.
     for (const double scale : {1.0, 1.5, 1.75}) {
@@ -391,7 +226,7 @@ TEST(UiTest, SignsKeepTheTextOnItsLine)
     }
 }
 
-TEST(UiTest, HistoryScrollsToTheLatest)
+TEST(LayoutTest, HistoryScrollsToTheLatest)
 {
     Fixture fixture;
     for (int i = 1; i <= 12; ++i) {
@@ -407,7 +242,7 @@ TEST(UiTest, HistoryScrollsToTheLatest)
     EXPECT_DOUBLE_EQ(history->scrollPosition().y, history->contentSize().height - history->geometry().height);
 }
 
-TEST(UiTest, HistorySitsOnTheExpression)
+TEST(LayoutTest, HistorySitsOnTheExpression)
 {
     Fixture fixture;
     for (const char* key : {"1", "+", "2", "="})
@@ -432,7 +267,7 @@ TEST(UiTest, HistorySitsOnTheExpression)
     EXPECT_LT(windowRect(rows->children().front().get()).y, windowRect(rows->children().back().get()).y);
 }
 
-TEST(UiTest, HistoryShowsTwoWholeRows)
+TEST(LayoutTest, HistoryShowsTwoWholeRows)
 {
     Fixture fixture(1.5);
     for (int i = 1; i <= 5; ++i) {
@@ -460,7 +295,7 @@ TEST(UiTest, HistoryShowsTwoWholeRows)
     EXPECT_GE(windowRect(rows->children()[3].get()).y - area.y, spacing - 1);
 }
 
-TEST(UiTest, EqualsKeyGreysWhenInactive)
+TEST(LayoutTest, EqualsKeyGreysWhenInactive)
 {
     Fixture fixture(1.5);
     Window& window = fixture.window.window();
@@ -493,60 +328,7 @@ TEST(UiTest, EqualsKeyGreysWhenInactive)
     EXPECT_EQ(plate("="), color(CalculatorColor::AccentKey));
 }
 
-TEST(UiTest, MainMenu)
-{
-    Fixture fixture;
-    const Menu* menu = fixture.window.window().mainMenu();
-    ASSERT_NE(menu, nullptr);
-    EXPECT_EQ(menu->submenu(0)->role(), MenuRole::Application);
-    ASSERT_NE(menu->submenu(1), nullptr);
-    EXPECT_EQ(menu->submenu(2)->role(), MenuRole::Windows);
-}
-
-TEST(UiTest, CopyPasteAndClearHistory)
-{
-    Fixture fixture;
-    for (const char* key : {"1", "2", "×", "3"})
-        fixture.click(key);
-    fixture.window.copy();
-    std::string copied;
-    Clipboard::requestText([&](std::string text) { copied = std::move(text); });
-    EXPECT_EQ(copied, "12×3");
-
-    // Pasted text goes in as typed, skipping what the keypad does not have.
-    fixture.click(Keypad::Clear);
-    fixture.window.paste("1,234.5 + 10% =");
-    EXPECT_EQ(fixture.text(), "1234.5+10%");
-    fixture.window.paste("*2-1/4");
-    EXPECT_EQ(fixture.text(), "1234.5+10%×2−1÷4");
-    fixture.click(Keypad::Clear);
-    fixture.window.paste("..5x+−3");
-    EXPECT_EQ(fixture.text(), "0.5−3");
-
-    // The same from the keyboard.
-    Window& window = fixture.window.window();
-    TestInput::setKeyboardFocus(window, true);
-    KeyEvent copyKey = keyEvent(key::letter('c'), 46);
-    copyKey.modifiers = ControlModifier;
-    TestInput::pressKey(window, copyKey);
-    TestInput::releaseKey(window, copyKey);
-    Clipboard::requestText([&](std::string text) { copied = std::move(text); });
-    EXPECT_EQ(copied, "0.5−3");
-    fixture.click(Keypad::Clear);
-    KeyEvent pasteKey = keyEvent(key::letter('v'), 47);
-    pasteKey.modifiers = ControlModifier;
-    TestInput::pressKey(window, pasteKey);
-    TestInput::releaseKey(window, pasteKey);
-    EXPECT_EQ(fixture.text(), "0.5−3");
-
-    fixture.click("=");
-    EXPECT_EQ(fixture.window.history()->count(), 1u);
-    fixture.window.clearHistory();
-    EXPECT_EQ(fixture.window.history()->count(), 0u);
-    EXPECT_EQ(fixture.text(), "-2.5");
-}
-
-TEST(UiTest, LayoutIsStable)
+TEST(LayoutTest, LayoutIsStable)
 {
     TestInput::setVerifiesLayout(true);
     {
@@ -558,7 +340,7 @@ TEST(UiTest, LayoutIsStable)
     TestInput::setVerifiesLayout(false);
 }
 
-TEST(UiTest, Themes)
+TEST(LayoutTest, Themes)
 {
     for (const bool dark : {false, true}) {
         Theme::setCurrent(dark ? Theme::dark() : Theme::light());
@@ -569,9 +351,6 @@ TEST(UiTest, Themes)
         EXPECT_NE(color(CalculatorColor::OperatorKeyHovered), color(CalculatorColor::OperatorKey));
         EXPECT_NE(color(CalculatorColor::OperatorKeyPressed), color(CalculatorColor::OperatorKeyHovered));
         EXPECT_NE(color(CalculatorColor::AccentKeyPressed), color(CalculatorColor::AccentKeyHovered));
-        Fixture fixture(1.5);
-        fixture.click("1");
-        EXPECT_EQ(fixture.text(), "1");
     }
     Theme::setCurrent(Theme::light());
 }

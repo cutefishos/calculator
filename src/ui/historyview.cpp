@@ -27,7 +27,7 @@ public:
                 continue;
             }
             Label* label = addChild<Label>(entries[i]);
-            label->setName("history entry");
+            label->setName("history:entry");
             label->setTextAlignment(Label::TextAlignment::Right);
             label->setElide(Label::Elide::Middle);
             label->setColor(ColorId::DisabledText);

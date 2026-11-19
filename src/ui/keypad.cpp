@@ -202,7 +202,7 @@ Keypad::Keypad()
         const std::string key = info.key;
         KeypadButton* button = addChild<KeypadButton>(info.label ? info.label : "", info.kind,
                                                       info.glyph ? info.glyph : "");
-        button->setName("key " + key);
+        button->setName("key:" + key);
         button->onClicked = [this, key] {
             if (onPressed)
                 onPressed(key);
